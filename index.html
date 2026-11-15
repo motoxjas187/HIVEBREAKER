@@ -63,6 +63,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 .it{background:#141c21;border:1px solid var(--ln);border-left-width:4px;border-radius:6px;padding:3px 6px;font-size:12px;color:#8fa0a8;line-height:1.2;text-align:left;font-family:inherit}
 .it b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it.nw{box-shadow:0 0 0 1px #e3a53a55}
 #actBtn{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);transform:translateX(-50%);z-index:4;display:none;min-height:46px;padding:4px 22px;font-size:18px;border-color:var(--am);color:var(--am);background:rgba(23,32,39,.95)}
+#placeBar{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 30px);transform:translateX(-50%);z-index:4;display:none;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--am);border-radius:10px;padding:6px 10px}#placeBar .pb{min-height:44px;font-size:17px}#placeTxt{font-size:15px;letter-spacing:.06em;color:var(--am)}
 #recallBar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 110px);transform:translateX(-50%);width:220px;height:22px;border:1px solid var(--cy);background:var(--pn);z-index:4;display:none;border-radius:4px;overflow:hidden}
 #recallBar i{position:absolute;left:0;top:0;bottom:0;background:rgba(79,208,216,.45)}#recallBar span{position:relative;display:block;text-align:center;font-size:13px;letter-spacing:.2em;line-height:20px}
 .rs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;margin:4px 0}.rs div{background:#141c21;border:1px solid var(--ln);border-left-width:4px;border-radius:6px;padding:3px 8px;font-size:14px;display:flex;justify-content:space-between}
@@ -84,7 +85,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
  </div>
 </div>
 <div id="side"><canvas id="mm" width="124" height="124"></canvas>
- <div id="btns"><button class="pb" id="bShop">⌂ BASE</button><button class="pb" id="bArm">⚔ ARMS</button><button class="pb on" id="bAuto">AUTO</button><button class="pb" id="bZoom">ZOOM</button><button class="pb" id="bGfx">HIGH</button><button class="pb" id="bFs">⛶</button><button class="pb" id="bPause">❚❚</button></div>
+ <div id="btns"><button class="pb" id="bShop">⌂ BASE</button><button class="pb" id="bBuild" style="display:none">▦ BUILD</button><button class="pb" id="bArm">⚔ ARMS</button><button class="pb on" id="bAuto">AUTO</button><button class="pb" id="bZoom">ZOOM</button><button class="pb" id="bGfx">HIGH</button><button class="pb" id="bFs">⛶</button><button class="pb" id="bPause">❚❚</button></div>
 </div>
 <div id="hint"><span>MOVE · PUSH INTO ROCK TO DIG</span><span>AIM · FIRE + DRILL</span></div>
 <div id="toast"></div>
@@ -107,6 +108,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 </div></div>
 <div class="ov" id="ovBase"><div class="armw"><div class="armh"><h2 id="bpH">BASE</h2><button class="pb" id="bBaseX">BACK</button></div><div id="bpBody"></div></div></div>
 <button id="actBtn" class="pb"></button>
+<div id="placeBar"><span id="placeTxt"></span><button class="pb" id="bPlaceOk" style="background:#2f9e50;color:#fff">✓ PLACE</button><button class="pb" id="bPlaceX" style="background:#b3382a;color:#fff">✕</button></div>
 <div id="recallBar"><i></i><span>RECALLING TO BASE</span></div>
 <div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSnd">SOUND: ON</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">ABANDON WORLD</button></div></div>
 <div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><p>The world is lost. You keep every rig upgrade, your armory, your base storage and your prestige. 90% of the cargo you were carrying is lost.</p><div class="kv" id="deadStats"></div><button class="go" id="bAgain">REDEPLOY</button></div></div>
@@ -148,6 +150,19 @@ const BX=30000,BY=30000;   // base level lives far from the mine
 const RES={scrap:{n:'Scrap',c:'#aab4bc',w:.1},cu:{n:'Copper Ore',c:'#c8692e',w:1},fe:{n:'Iron Ore',c:'#d8b48c',w:1},di:{n:'Rough Diamond',c:'#3ad8d0',w:1},au:{n:'Gold Ore',c:'#ffd23a',w:1},co:{n:'Core Ore',c:'#ff3a2a',w:1}};
 const BARS={bcu:{n:'Copper Bar',from:'cu',need:2,time:2,c:'#e07a3a'},bfe:{n:'Iron Bar',from:'fe',need:2,time:3,c:'#e8dccb'},bau:{n:'Gold Bar',from:'au',need:2,time:4,c:'#ffd23a'},bdi:{n:'Cut Diamond',from:'di',need:1,time:5,c:'#6ff6f0'},bco:{n:'Core Ingot',from:'co',need:2,time:7,c:'#ff5a3a'}};
 const BAR_TIER=['bcu','bfe','bau','bdi','bco'];
+const RAW=['co','di','au','fe','cu'];   // highest value first
+const CRU={};for(const r of RAW)CRU['x'+r]={n:'Crushed '+RES[r].n.replace(' Ore','').replace('Rough ',''),c:RES[r].c,w:1};
+const ITEM=Object.assign({},RES,CRU,BARS);
+// Base buildings chain by adjacency: no belts. Storage boxes are ports into base storage.
+const BT={box:{n:'▣ STORAGE BOX',d:'Port into base storage. Neighbours pull ore and crushed ore from it and push finished products into it.',cost:{scrap:60,bcu:4}},
+ crusher:{n:'⚙ CRUSHER',d:'Crushes 2 ore into 3 crushed ore. Put a smelter next to it for +50% bars.',cost:{scrap:150,bcu:6,bfe:4}},
+ smelter:{n:'♨ SMELTER',d:'Smelts ore or crushed ore into bars. Crushed ore smelts 20% faster.',cost:{scrap:120,bcu:8}}};
+const EXPAND=[{pl:1,c:{scrap:8000,bfe:40,bau:20}},{pl:2,c:{scrap:32000,bau:60,bdi:30}},{pl:3,c:{scrap:128000,bdi:80,bco:40}},{pl:4,c:{scrap:512000,bco:150,bdi:120}}];
+const hasC=c=>Object.keys(c).every(k=>(G.store[k]||0)>=c[k]);
+function payC(c){for(const k in c)G.store[k]-=c[k]}
+const costTxtC=c=>Object.keys(c).filter(k=>c[k]).map(k=>`<span style="color:${(G.store[k]||0)>=c[k]?'#6fcf6a':'#d8503a'}">${fmtN(c[k])} ${k==='scrap'?'scrap':BARS[k].n}</span>`).join(' · ');
+function freshBase(){const b={};b[(BX-4)+','+(BY+3)]={t:'smelter',lv:1,inv:{},out:{},job:null};b[(BX-3)+','+(BY+3)]={t:'box',lv:1,inv:{},out:{},job:null};return{lvl:0,oc:0,beacon:0,b,acc:0}}
+function baseDims(){const l=(G.base&&G.base.lvl)||0;return{hw:7+3*l,hh:5+2*l}}
 const ORE_RES={4:'cu',5:'fe',6:'di',7:'au',9:'co'};
 // Minecraft-style ore textures: [fleck colour, highlight]
 const ORE_TEX=[[[.86,.47,.22],[1,.72,.45]],[[.84,.68,.52],[.98,.86,.72]],[[.25,.92,.9],[.75,1,1]],[[1,.8,.12],[1,.97,.6]],[[.95,.15,.1],[1,.55,.35]]];
@@ -177,7 +192,7 @@ function hiveAt(cx,cy){const k=K(cx,cy);let hv=hiveCache.get(k);if(hv!==undefine
   hv={id:++hiveId,cx,cy,x,y,r,d:dd,alive:true,tier:1+Math.floor(dd/55),hp:0,max:0,spawnCD:2,waveCD:45,known:false,aware:false,deadAt:-999,lastNear:0,count:0,squad:null,mesh:null,bar:null,regrows:0};setHiveHP(hv)}
  hiveCache.set(k,hv);return hv}
 function setHiveHP(hv){hv.max=Math.round(55*(1+hv.d/30)*(1+.45*(hv.tier-1))*timeF()*(1+.6*(G.pl||0)));hv.hp=hv.max}
-function baseOpen(x,y){if(x>20000)return x>=BX-7&&x<=BX+7&&y>=BY-5&&y<=BY+5;if(x>=-2&&x<=1&&y>=-2&&y<=1)return true;const hv=hiveAt(Math.floor(x/CH),Math.floor(y/CH));
+function baseOpen(x,y){if(x>20000){const D=baseDims();return Math.abs(x-BX)<=D.hw&&Math.abs(y-BY)<=D.hh}if(x>=-2&&x<=1&&y>=-2&&y<=1)return true;const hv=hiveAt(Math.floor(x/CH),Math.floor(y/CH));
  if(hv){const dx=x-hv.x,dy=y-hv.y,rr=hv.r+(h2(x,y,15)-.5)*.9;if(dx*dx+dy*dy<=rr*rr)return true}return false}
 let dug=new Set(),mods=new Map(),revealed=new Set();
 function isOpen(x,y){return dug.has(K(x,y))||baseOpen(x,y)}
@@ -194,7 +209,7 @@ function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=
 function resetState(){SEED=(rnd()*1e9)|0;matCache.clear();hiveCache=new Map();dug=new Set();mods=new Map();revealed=new Set();
  Object.assign(G,{t:0,vision:7,blockDirty:true,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,shake:0,loot:0});
  Object.assign(M,{dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cap:40,cd:0,beamT:0});
- G.cargo={};G.store={};G.smelt={q:{},act:null};G.where='mine';G.recall=0;G.mineX=0;G.mineY=0;
+ G.cargo={};G.store={};G.base=freshBase();G.where='mine';G.recall=0;G.mineX=0;G.mineY=0;
  W=freshArmory();
  P={x:0,y:0,r:.32,hp:100,max:100,ang:Math.PI/2,vx:0,vy:0,hurtT:9,fireCD:0,inv:0};
  MU.forEach(u=>u.lvl=0);
@@ -213,6 +228,14 @@ const MU=[
  {id:'scan',ic:'◉',n:'Scanner',d:'See farther through tunnels',base:40,max:6,f:l=>{G.vision=7+l;reveal()}},
  {id:'cargo',ic:'▤',n:'Cargo Pod',d:'+30 cargo capacity',base:18,max:30,f:l=>M.cap=40+30*l}];
 const costOf=u=>Math.round(u.base*2.5*Math.pow(1.75,u.lvl));
+// Upgrade tree: each upgrade needs its parent at a set level before it unlocks.
+const TREE={pow:null,spd:['pow',1],reach:['spd',2],yield:['pow',2],cargo:null,mag:['cargo',1],hull:null,scan:['hull',2]};
+const muBy=id=>MU.find(u=>u.id===id);
+function unlocked(u){const r=TREE[u.id];return !r||muBy(r[0]).lvl>=r[1]}
+const reqTxt=r=>`Requires ${muBy(r[0]).n} LV ${r[1]}`;
+// Base tree: crusher, overclock, beacon, expansion and building marks hang off rig upgrades / each other
+const BREQ={crusher:()=>muBy('pow').lvl>=3?null:'Requires Drill Power LV 3',oc:()=>muBy('cargo').lvl>=2?null:'Requires Cargo Pod LV 2',beacon:()=>muBy('scan').lvl>=1?null:'Requires Scanner LV 1',
+ expand:()=>(G.base.oc||0)>=2?null:'Requires Overclock LV 2',mk:b=>b.lv>=4&&(G.base.oc||0)<3?'Requires Overclock LV 3':b.lv>=2&&(G.base.oc||0)<1?'Requires Overclock LV 1':null};
 // Forge recipe: scrap plus bars; deeper levels need rarer bars (copper → iron → gold → diamond → core).
 function forgeCost(u){const L=u.lvl;return{scrap:costOf(u),bar:BAR_TIER[Math.min(4,Math.floor(L/3))],n:2+L}}
 function gunCost(g){return{scrap:HBW.upgradeCost(g)*3,bar:BAR_TIER[Math.min(4,Math.floor(g.level/5))],n:1+Math.floor(g.level/3)}}
@@ -305,7 +328,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  setupInput();setupUI();applyGfx();
  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();if(G.state==='play')pause();toast('GRAPHICS PAUSED · RESTORING')});
  cv.addEventListener('webglcontextrestored',()=>{try{engine.resize();scene.resetCachedMaterial();toast('GRAPHICS RESTORED')}catch(e){console.warn('WebGL restore',e)}});
- scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);if(G.state==='base'&&openMach==='smelt'){G.smR=(G.smR||0)-dt;if(G.smR<=0){G.smR=.25;renderBase()}}}updateCamera(dt);updateLabels()});
+ scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);}updateCamera(dt);updateLabels()});
  engine.runRenderLoop(()=>scene.render());
  addEventListener('resize',()=>engine.resize());
  resetState();G.state='title';showBest();placeCamera();rebuild();
@@ -457,7 +480,7 @@ function damageBlock(x,y,amt,src){if(isOpen(x,y)||MAT[matAt(x,y)].unbreak)return
 function onDug(x,y,t,src){const c=MAT[t].c;burst(x+.5,.6,y+.5,14,[c[0]*1.6,c[1]*1.6,c[2]*1.6],[c[0],c[1],c[2]],2.5);G.flowDirty=true;
  if(src!=='enemy'){G.mined++;const d=Math.hypot(x,y),o=Math.max(1,Math.round(MAT[t].ore*1.2*M.yield*(1+d/45)*(1+.5*(G.pl||0))));const so=addCargo('scrap',o);if(so)popText(x+.5,y+.5,'+'+so,'#aab4bc');
   const rk=ORE_RES[t];if(rk){const n=Math.floor(M.yield)+(rnd()<M.yield%1?1:0),got=addCargo(rk,n);if(got){popText(x+.5,y+.9,'+'+got+' '+RES[rk].n,RES[rk].c,true);if(t===9)toast('CORE ORE')}}
-  if(t===7){const opts=MU.filter(u=>u.lvl<u.max);const u=opts[(rnd()*opts.length)|0];if(u){u.lvl++;u.f(u.lvl);toast('RELIC · FREE '+u.n.toUpperCase()+' '+u.lvl)}burst(x+.5,.8,y+.5,30,[1,.85,.2],[1,.5,.1],4)}}
+  if(t===7){const opts=MU.filter(u=>u.lvl<u.max&&unlocked(u));const u=opts[(rnd()*opts.length)|0];if(u){u.lvl++;u.f(u.lvl);toast('RELIC · FREE '+u.n.toUpperCase()+' '+u.lvl)}burst(x+.5,.8,y+.5,30,[1,.85,.2],[1,.5,.1],4)}}
  const dx=x+.5-P.x,dy=y+.5-P.y;if(dx*dx+dy*dy<(G.vision+2)*(G.vision+2))reveal()}
 function tryDrill(x,y){if(M.cd>0||MAT[matAt(x,y)].unbreak)return;M.cd=1/M.rate;M.beamT=.12;M.bx=x+.5;M.by=y+.5;damageBlock(x,y,M.dmg,'drill');burst(x+.5,.7,y+.5,4,[.6,1,1],[.2,.6,1],2)}
 function firstSolid(ang,reach){const c=Math.cos(ang),s=Math.sin(ang);for(let d=.2;d<=reach;d+=.1){const x=Math.floor(P.x+c*d),y=Math.floor(P.y+s*d);if(!isOpen(x,y))return[x,y]}return null}
@@ -478,7 +501,7 @@ function setupInput(){const tz=$('touch'),kM=$('kMove'),kA=$('kAim');
   for(const s of[IN.mv,IN.am])if(s.id===e.pointerId){let dx=(e.clientX-s.ox)/50,dy=(e.clientY-s.oy)/50;const m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}s.dx=dx;s.dy=dy;knob(s===IN.mv?kM:kA,s,e.clientX,e.clientY)}});
  const up=e=>{if(e.pointerType==='mouse'){IN.mouse.down=false;return}for(const s of[IN.mv,IN.am])if(s.id===e.pointerId){s.id=null;s.dx=s.dy=0;(s===IN.mv?kM:kA).style.display='none'}};
  tz.addEventListener('pointerup',up);tz.addEventListener('pointercancel',up);
- addEventListener('keydown',e=>{IN.keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&G.state==='play'&&nearM)openMachine(nearM);if(e.key.toLowerCase()==='r'&&G.state==='play')startRecall();if(e.key===' ')IN.keys.space=true;if(e.key==='Escape'&&G.state==='play')pause()});
+ addEventListener('keydown',e=>{IN.keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&G.state==='play'){if(G.placing)confirmPlace();else if(nearM)openMachine(nearM)}if(e.key.toLowerCase()==='r'&&G.state==='play')startRecall();if(e.key===' ')IN.keys.space=true;if(e.key==='Escape'&&G.state==='play')pause()});
  addEventListener('keyup',e=>{IN.keys[e.key.toLowerCase()]=false;if(e.key===' ')IN.keys.space=false});
  addEventListener('wheel',e=>{G.zoom=clamp(G.zoom+(e.deltaY>0?.1:-.1),1,2.6);G.blockDirty=true;try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){}},{passive:true});
  addEventListener('pagehide',()=>saveGame());
@@ -635,7 +658,7 @@ function updateHives(dt){for(const h of activeHives){const vis=revealed.has(K(h.
 /* ---------------- MAIN UPDATE ---------------- */
 function nearestTarget(range){let best=null,bd=range;for(const e of enemies){if(e.dead||!e.b.isVisible)continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd&&los(P.x,P.y,e.x,e.y)){bd=d;best=e}}
  for(const h of activeHives){if(!h.alive||!revealed.has(K(h.x,h.y)))continue;const d=Math.hypot(h.x+.5-P.x,h.y+.5-P.y);if(d<bd-1.5&&los(P.x,P.y,h.x+.5,h.y+.5)){bd=d;best={x:h.x+.5,y:h.y+.5,hive:h}}}return best}
-function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(dt);
+function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(dt);if(atBase)updateBaseVis(dt);
  // input
  let mx=0,my=0;const k=IN.keys;if(k.a||k.arrowleft)mx-=1;if(k.d||k.arrowright)mx+=1;if(k.w||k.arrowup)my+=1;if(k.s||k.arrowdown)my-=1;
  if(IN.mv.id!==null){mx=IN.mv.dx;my=-IN.mv.dy}const ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml}
@@ -656,8 +679,8 @@ function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(d
  G.flowT-=dt;if(G.flowDirty&&G.flowT<=0){buildFlow();G.flowDirty=false;G.flowT=.3}
  if(!atBase){G.hiveT-=dt;if(G.hiveT<=0){hiveTick(.25-G.hiveT);G.hiveT=.25}}
  if(!atBase){updateEnemies(dt);updateHives(dt)}updateBullets(dt);updateLoot(dt);
- if(G.recall>0){G.recall-=dt;$('recallBar').firstChild.style.width=((1-G.recall/3)*100)+'%';if(Math.random()<.3)burst(P.x+(Math.random()-.5),.2,P.y+(Math.random()-.5),3,[.4,.9,1],[.2,.5,1],2);if(G.recall<=0)goBase()}
- if(atBase){if(padRing)padRing.rotation.y+=dt*1.5;const n=nearMachine();if(n!==nearM){nearM=n;const a=$('actBtn');a.style.display=n?'block':'none';if(n)a.textContent=n.n}}else if(nearM){nearM=null;$('actBtn').style.display='none'}
+ if(G.recall>0){G.recall-=dt;$('recallBar').firstChild.style.width=((1-G.recall/(G.recallMax||3))*100)+'%';if(Math.random()<.3)burst(P.x+(Math.random()-.5),.2,P.y+(Math.random()-.5),3,[.4,.9,1],[.2,.5,1],2);if(G.recall<=0)goBase()}
+ if(atBase){if(padRing)padRing.rotation.y+=dt*1.5;const n=nearMachine();if((n&&n.id)!==(nearM&&nearM.id)||(n&&nearM&&n.n!==nearM.n)){nearM=n;const a=$('actBtn');a.style.display=n?'block':'none';if(n)a.textContent=n.n}}else if(nearM){nearM=null;$('actBtn').style.display='none'}
  G.rebuildCD-=dt;if(G.blockDirty&&G.rebuildCD<=0){rebuild();G.rebuildCD=.1}
  G.mmT-=dt;if(G.mmT<=0){drawMinimap();G.mmT=.35}
  G.saveT=(G.saveT||0)-dt;if(G.saveT<=0){G.saveT=15;saveGame()}
@@ -698,14 +721,14 @@ function armoryLoad(w){if(!w.eq[0]&&!w.eq[1])w.eq[0]=freshArmory().eq[0];return 
 function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
 function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
 function saveGame(){if(!P||G.state==='title'||G.state==='dead')return;try{const hv=[];for(const h of hiveCache.values())if(h&&(h.known||!h.alive||h.regrows||h.hp<h.max))hv.push([h.cx,h.cy,h.alive?1:0,h.tier,Math.round(h.hp),h.known?1:0,+h.deadAt.toFixed(1),+h.lastNear.toFixed(1),h.regrows,+h.waveCD.toFixed(1),h.max]);
- const s={v:1,seed:SEED,g:{t:G.t,vision:G.vision,kills:G.kills,hives:G.hives,mined:G.mined,maxDist:G.maxDist,loot:G.loot||0,pl:G.pl,auto:G.auto,cargo:G.cargo,store:G.store,smelt:G.smelt,where:G.where,mineX:G.mineX,mineY:G.mineY},p:{x:P.x,y:P.y,hp:P.hp,max:P.max,ang:P.ang},w:armorySave(),mu:MU.map(u=>u.lvl),dug:[...dug],mods:[...mods].map(([k,m])=>[k,+m.h.toFixed(2),m.m,m.t]),rev:[...revealed],hv};
+ const s={v:1,seed:SEED,g:{t:G.t,vision:G.vision,kills:G.kills,hives:G.hives,mined:G.mined,maxDist:G.maxDist,loot:G.loot||0,pl:G.pl,auto:G.auto,cargo:G.cargo,store:G.store,base:G.base,where:G.where,mineX:G.mineX,mineY:G.mineY},p:{x:P.x,y:P.y,hp:P.hp,max:P.max,ang:P.ang},w:armorySave(),mu:MU.map(u=>u.lvl),dug:[...dug],mods:[...mods].map(([k,m])=>[k,+m.h.toFixed(2),m.m,m.t]),rev:[...revealed],hv};
  localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){console.warn('save failed',e)}}
 function loadGame(){let s=null;try{s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}if(!s||s.v!==1)return false;
- resetState();SEED=s.seed;matCache.clear();hiveCache=new Map();Object.assign(G,s.g);if(!G.store){G.store={scrap:s.g.ore||0};G.cargo={};G.smelt={q:{},act:null}}delete G.ore;W=s.w&&s.w.eq?armoryLoad(s.w):freshArmory();
+ resetState();SEED=s.seed;matCache.clear();hiveCache=new Map();Object.assign(G,s.g);if(!G.store){G.store={scrap:s.g.ore||0};G.cargo={}}delete G.ore;if(G.smelt){for(const k in G.smelt.q||{})G.store[BARS[k].from]=(G.store[BARS[k].from]||0)+G.smelt.q[k]*BARS[k].need;delete G.smelt}if(!G.base||!G.base.b)G.base=freshBase();W=s.w&&s.w.eq?armoryLoad(s.w):freshArmory();
  dug=new Set(s.dug);for(const m of s.mods)mods.set(m[0],{h:m[1],m:m[2],t:m[3]});revealed=new Set(s.rev);
  MU.forEach((u,i)=>{u.lvl=s.mu[i]||0;if(u.id!=='scan')u.f(u.lvl);else G.vision=7+u.lvl});Object.assign(P,s.p);
  for(const a of s.hv){const h=hiveAt(a[0],a[1]);if(!h)continue;Object.assign(h,{alive:!!a[2],tier:a[3],hp:a[4],known:!!a[5],deadAt:a[6],lastNear:a[7],regrows:a[8],waveCD:a[9],max:a[10]});if(h.known)knownHives.push(h)}
- $('bAuto').classList.toggle('on',G.auto);setWhere(G.where||'mine');
+ $('bAuto').classList.toggle('on',G.auto);setWhere(G.where||'mine');syncBuildings();
  placeCamera();G.lastCell=null;reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('RUN RESTORED'+(G.pl?' · PRESTIGE '+G.pl:''));return true}
 function prestReq(){return 3+2*G.pl}
 function renderPrestige(){const need=prestReq(),ok=G.hives>=need,el=$('prestRow');
@@ -714,13 +737,13 @@ function renderPrestige(){const need=prestReq(),ok=G.hives>=need,el=$('prestRow'
  b.onclick=()=>{if(!ok)return;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='CONFIRM';return}doPrestige()};el.firstChild.appendChild(b)}
 function doPrestige(){newWorld(1,{});toast('PRESTIGE '+G.pl+' · THE ROCK GREW HARDER')}
 const SALVAGE=.1;
-function newWorld(plUp,cargo){const keep={mu:MU.map(u=>u.lvl),w:W,loot:G.loot,max:P.max,store:G.store,smelt:G.smelt,pl:G.pl+plUp,auto:G.auto};
- resetState();G.pl=keep.pl;G.auto=keep.auto;W=keep.w;G.loot=keep.loot;G.store=keep.store;G.smelt=keep.smelt;G.cargo=cargo||{};setWhere('mine');
+function newWorld(plUp,cargo){const keep={mu:MU.map(u=>u.lvl),w:W,loot:G.loot,max:P.max,store:G.store,base:G.base,pl:G.pl+plUp,auto:G.auto};
+ resetState();G.pl=keep.pl;G.auto=keep.auto;W=keep.w;G.loot=keep.loot;G.store=keep.store;G.base=keep.base;G.cargo=cargo||{};setWhere('mine');
  MU.forEach((u,i)=>{u.lvl=keep.mu[i];if(u.id!=='scan')u.f(u.lvl);else G.vision=7+u.lvl});P.max=keep.max;P.hp=P.max;
  show('ovBase',false);placeCamera();reveal();buildFlow();rebuild();G.state='play';hud();saveGame()}
 
 /* ---------------- BASE LEVEL ---------------- */
-const MACH=[{id:'store',n:'▣ STORAGE',x:BX-5,y:BY+3},{id:'smelt',n:'♨ SMELTER',x:BX-2,y:BY+4},{id:'forge',n:'⚒ FORGE',x:BX+2,y:BY+4},{id:'arm',n:'⚔ ARMORY RACK',x:BX+5,y:BY+3},{id:'pad',n:'⇪ DEPLOY PAD',x:BX,y:BY-3}];
+const MACH=[{id:'store',n:'▣ VAULT',x:BX-5,y:BY+3},{id:'forge',n:'⚒ FORGE',x:BX+2,y:BY+4},{id:'arm',n:'⚔ ARMORY RACK',x:BX+5,y:BY+3},{id:'pad',n:'⇪ DEPLOY PAD',x:BX,y:BY-3}];
 let baseRoot,padRing,nearM=null;
 function buildBase(){baseRoot=new B.TransformNode('base',scene);const vc=mats.vc;
  const put=(m,mc)=>{m.parent=baseRoot;m.position.x+=mc.x+.5;m.position.z+=mc.y+.5;m.isPickable=false;if(shadowGen)shadowGen.addShadowCaster(m);return m};
@@ -735,43 +758,101 @@ function buildBase(){baseRoot=new B.TransformNode('base',scene);const vc=mats.vc
   const m=merge(p,'mach-'+mc.id,vc);m.position.y=0;put(m,mc)}
  // glowing signs floating above each machine (always face the camera)
  const signCol={store:'#e3a53a',smelt:'#ff8a3a',forge:'#ff5a3a',arm:'#b48cff',pad:'#4fd0d8'};
- for(const mc of MACH){const t=new B.DynamicTexture('sign'+mc.id,{width:512,height:128},scene,true),g=t.getContext(),col=signCol[mc.id],txt={store:'STORAGE',smelt:'SMELTER',forge:'FORGE',arm:'ARMORY',pad:'DEPLOY'}[mc.id];
+ for(const mc of MACH){const t=new B.DynamicTexture('sign'+mc.id,{width:512,height:128},scene,true),g=t.getContext(),col=signCol[mc.id],txt={store:'VAULT',smelt:'SMELTER',forge:'FORGE',arm:'ARMORY',pad:'DEPLOY'}[mc.id];
   g.clearRect(0,0,512,128);g.fillStyle='rgba(8,12,16,.78)';g.beginPath();g.roundRect?g.roundRect(8,14,496,100,18):g.rect(8,14,496,100);g.fill();
   g.lineWidth=5;g.strokeStyle=col;g.stroke();let fs=80;g.font='700 '+fs+'px "Barlow Condensed",sans-serif';while(g.measureText(txt).width>450&&fs>30){fs-=4;g.font='700 '+fs+'px "Barlow Condensed",sans-serif'}g.textAlign='center';g.textBaseline='middle';g.shadowColor=col;g.shadowBlur=18;g.fillStyle=col;g.fillText(txt,256,66);g.shadowBlur=0;g.fillStyle='#fff';g.globalAlpha=.55;g.fillText(txt,256,66);
   t.hasAlpha=true;t.update();
   const m=B.MeshBuilder.CreatePlane('signp'+mc.id,{width:3.4,height:.85},scene),mt=new B.StandardMaterial('signm'+mc.id,scene);
   mt.diffuseTexture=t;mt.emissiveTexture=t;mt.useAlphaFromDiffuseTexture=true;mt.disableLighting=true;mt.backFaceCulling=false;m.material=mt;
   m.billboardMode=B.Mesh.BILLBOARDMODE_ALL;m.position.set(mc.x+.5,mc.id==='pad'?1.5:2.7,mc.y+.5);m.parent=baseRoot;m.isPickable=false}
+ // building prototypes (instanced per placed building)
+ const mk=(parts,name)=>{const m=merge(parts,name,vc);m.position.y=-60;if(shadowGen)shadowGen.addShadowCaster(m);return m};
+ const gm=(col,name,w,h,d,pos)=>{const m=B.MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},scene);m.material=stdMat(name+'m',[0,0,0],col);m.position.set(pos[0],pos[1]-60,pos[2]);m.bakeCurrentTransformIntoVertices();m.position.y=-60;return m};
+ BPROTO.box={b:mk([part('Box',{width:.8,height:.6,depth:.8},[.38,.24,.12],[0,.3,0]),part('Box',{width:.84,height:.08,depth:.84},[.8,.6,.22],[0,.62,0]),part('Box',{width:.84,height:.08,depth:.84},[.8,.6,.22],[0,.06,0]),part('Box',{width:.08,height:.6,depth:.84},[.6,.45,.18],[0,.3,0])],'pbox')};
+ BPROTO.crusher={b:mk([part('Box',{width:.9,height:.45,depth:.9},[.32,.34,.36],[0,.22,0]),part('Cylinder',{height:.35,diameterTop:.9,diameterBottom:.5,tessellation:4},[.85,.65,.1],[0,.62,0],[0,Math.PI/4,0]),part('Box',{width:.95,height:.06,depth:.95},[.12,.12,.13],[0,.46,0])],'pcrush'),
+  r:mk([part('Cylinder',{height:.7,diameter:.2,tessellation:8},[.55,.57,.6],[-.12,0,0],[0,0,Math.PI/2]),part('Cylinder',{height:.7,diameter:.2,tessellation:8},[.55,.57,.6],[.12,0,0],[0,0,Math.PI/2]),part('Box',{width:.04,height:.24,depth:.04},[.2,.2,.2],[-.12,0,0]),part('Box',{width:.04,height:.24,depth:.04},[.2,.2,.2],[.12,0,0])],'prollers')};
+ BPROTO.smelter={b:mk([part('Box',{width:.9,height:1.05,depth:.85},[.42,.3,.26],[0,.52,0]),part('Box',{width:.95,height:.1,depth:.9},[.25,.2,.18],[0,1.07,0]),part('Box',{width:.26,height:.5,depth:.26},[.3,.26,.24],[.25,1.35,.18])],'psmelt'),g:gm([1,.45,.1],'psmg',.45,.32,.04,[0,.36,-.44])};
+ CONN=gm([1,.65,.2],'pconn',1,.05,.14,[0,.03,0]);GHOST=B.MeshBuilder.CreateBox('ghost',{width:.95,height:.08,depth:.95},scene);GHOST.material=stdMat('ghostm',[0,0,0],[.2,1,.4]);GHOST.material.alpha=.6;GHOST.isPickable=false;GHOST.setEnabled(false);
  baseRoot.setEnabled(false)}
-function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';
- if(w==='base'){for(let x=BX-8;x<=BX+8;x++)for(let y=BY-6;y<=BY+6;y++)revealed.add(K(x,y))}}
-function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=3;$('recallBar').style.display='block'}
+const BPROTO={};let CONN,GHOST,bInst=[];
+function syncBuildings(){for(const m of bInst)m.dispose();bInst=[];if(!G.base||!BPROTO.box)return;const BS=G.base.b;
+ const add=(proto,x,y,tag,b)=>{const m=proto.createInstance('bi');m.parent=baseRoot;m.position.set(x+.5,0,y+.5);m.tag=tag;m.bref=b;bInst.push(m);return m};
+ for(const key in BS){const b=BS[key],[x,y]=key.split(',').map(Number),P0=BPROTO[b.t];add(P0.b,x,y,'b',b).scaling.setAll(.92+b.lv*.04);if(P0.r)add(P0.r,x,y,'r',b).position.y=.58;if(P0.g)add(P0.g,x,y,'g',b)}
+ const linked=(x,y)=>!!bAt(x,y)||(x===MACH[0].x&&y===MACH[0].y);
+ for(const key in BS){const[x,y]=key.split(',').map(Number);for(const[dx,dy]of[[1,0],[0,1],[-1,0],[0,-1]]){const nx=x+dx,ny=y+dy;if(!linked(nx,ny))continue;if(bAt(nx,ny)&&(dx<0||dy<0))continue;const c=CONN.createInstance('ci');c.parent=baseRoot;c.position.set(x+.5+dx*.5,0,y+.5+dy*.5);c.rotation.y=dx?0:Math.PI/2;c.scaling.x=.55;bInst.push(c)}}}
+function updateBaseVis(dt){for(const m of bInst){if(m.tag==='r'&&m.bref.job)m.rotation.x+=dt*10;if(m.tag==='g'){m.isVisible=!!m.bref.job;if(m.bref.job)m.scaling.y=1+Math.sin(G.t*30+m.position.x)*.15}}
+ if(G.placing){const t=placeTarget(),ok=t&&placeValid(t[0],t[1]);GHOST.setEnabled(!!t);if(t){GHOST.position.set(t[0]+.5,.05,t[1]+.5);GHOST.material.emissiveColor.set(ok?.2:1,ok?1:.2,ok?.4:.2)}$('bPlaceOk').disabled=!ok||!hasC(BT[G.placing].cost)}}
+/* ---- build mode ---- */
+function placeTarget(){if(G.where!=='base')return null;return[Math.floor(P.x+Math.cos(P.ang)*1.1),Math.floor(P.y+Math.sin(P.ang)*1.1)]}
+function placeValid(x,y){if(!baseOpen(x,y)||bAt(x,y))return false;for(const mc of MACH){if(Math.abs(mc.x-x)<=(mc.id==='pad'?1:0)&&Math.abs(mc.y-y)<=(mc.id==='pad'?1:0))return false}return true}
+function startPlace(t){closeBase();G.placing=t;$('placeTxt').textContent=BT[t].n;$('placeBar').style.display='flex';$('actBtn').style.display='none';toast('FACE AN EMPTY TILE AND TAP PLACE')}
+function endPlace(){G.placing=null;if(GHOST)GHOST.setEnabled(false);const pb=$('placeBar');if(pb)pb.style.display='none';nearM=null}
+function confirmPlace(){const t=G.placing,p=placeTarget();if(!t||!p||!placeValid(p[0],p[1])||!hasC(BT[t].cost))return;payC(BT[t].cost);G.base.b[p[0]+','+p[1]]={t,lv:1,inv:{},out:{},job:null};syncBuildings();burst(p[0]+.5,.6,p[1]+.5,24,[1,.8,.3],[.6,.4,.1],3);
+ toast(BT[t].n.replace(/^\S+\s/,'')+' BUILT');if(!hasC(BT[t].cost))endPlace();saveGame()}
+const bUpCost=b=>{const c={scrap:100*Math.pow(2,b.lv-1)};c[BAR_TIER[Math.min(4,b.lv-1)]]=4+2*b.lv;return c};
+const ocCost=l=>{const c={scrap:400*Math.pow(2,l),bfe:6+4*l};if(l>=2)c.bau=4+2*l;return c};
+const beaconCost=l=>{const c={scrap:300*Math.pow(2,l),bcu:10+5*l};if(l>=1)c.bfe=8+4*l;return c};
+function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';$('bBuild').style.display=w==='base'?'':'none';if(w!=='base')endPlace();
+ if(w==='base'){const D=baseDims();for(let x=BX-D.hw-1;x<=BX+D.hw+1;x++)for(let y=BY-D.hh-1;y<=BY+D.hh+1;y++)revealed.add(K(x,y))}}
+function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=G.recallMax=3/(1+.6*((G.base&&G.base.beacon)||0));$('recallBar').style.display='block'}
 function goBase(){G.recall=0;$('recallBar').style.display='none';G.mineX=P.x;G.mineY=P.y;for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
  setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;P.hp=P.max;placeCamera();G.lastCell=null;G.blockDirty=true;burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('BASE · CARGO '+Math.floor(cargoW())+'/'+M.cap);saveGame()}
 function deploy(){show('ovBase',false);G.state='play';setWhere('mine');P.x=G.mineX;P.y=G.mineY;P.vx=P.vy=0;placeCamera();G.lastCell=null;G.blockDirty=true;G.flowDirty=true;reveal();burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('DEPLOYED');saveGame()}
-function smeltTick(dt){const S=G.smelt;if(!S.act){for(const k of BAR_TIER)if(S.q[k]>0){S.act={bar:k,t:BARS[k].time};break}}
- if(S.act){S.act.t-=dt;if(S.act.t<=0){const k=S.act.bar;G.store[k]=(G.store[k]||0)+1;S.q[k]--;S.act=null;if(G.state==='base'&&openMach==='smelt')renderBase()}}}
-function nearMachine(){if(G.where!=='base')return null;let best=null,bd=1.9;for(const mc of MACH){const d=Math.hypot(mc.x+.5-P.x,mc.y+.5-P.y);if(d<bd){bd=d;best=mc}}return best}
+function bAt(x,y){return G.base.b[x+','+y]}
+function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
+const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
+function wants(t){return t==='crusher'?RAW:[...RAW.map(r=>'x'+r),...RAW]}
+function flowFx(ax,ay,bx,by,it){if(G.where!=='base')return;const c=B.Color3.FromHexString(ITEM[it].c);burst((ax+bx)/2+.5,.9,(ay+by)/2+.5,5,[c.r,c.g,c.b],[c.r*.6,c.g*.6,c.b*.6],1.2)}
+function smeltTick(dt){const BS=G.base;if(!BS)return;BS.acc=(BS.acc||0)+dt;if(BS.acc<.2)return;const st=BS.acc;BS.acc=0;const S=G.store;
+ for(const key in BS.b){const b=BS.b[key];if(b.t==='box')continue;const[x,y]=key.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
+  const outN=Object.values(b.out).reduce((a,v)=>a+v,0);
+  if(!b.job&&outN<8){for(const it of wants(b.t)){const r=it[0]==='x'?it.slice(1):it,need=b.t==='crusher'?2:BARS['b'+r].need;let have=b.inv[it]||0;
+    for(const[nx,ny]of nb){if(have>=need)break;const n=bAt(nx,ny);
+     if(isPort(nx,ny)){const tk=Math.min(need-have,S[it]||0);if(tk>0){S[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
+     else if(n&&n.t!=='box'&&n.out[it]>0){const tk=Math.min(need-have,n.out[it]);n.out[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
+    b.inv[it]=have;if(have>=need){b.inv[it]-=need;b.job=b.t==='crusher'?{out:'x'+r,n:3,t:1.5,T:1.5}:{out:'b'+r,n:1,t:BARS['b'+r].time*(it[0]==='x'?.8:1),T:BARS['b'+r].time*(it[0]==='x'?.8:1)};break}}}
+  if(b.job){b.job.t-=st*bSpeed(b);if(b.job.t<=0){b.out[b.job.out]=(b.out[b.job.out]||0)+b.job.n;b.job=null}}
+  // push products: keep ones a neighbouring building will pull, send the rest to a port
+  for(const it in b.out){if(!(b.out[it]>0))continue;const used=nb.some(([nx,ny])=>{const n=bAt(nx,ny);return n&&n.t!=='box'&&wants(n.t).includes(it)});
+   if(used&&b.out[it]<6)continue;const p=nb.find(([nx,ny])=>isPort(nx,ny));if(p){S[it]=(S[it]||0)+b.out[it];flowFx(x,y,p[0],p[1],it);b.out[it]=0}}}
+ if(G.state==='base'&&openMach&&openMach.startsWith('bld:'))renderBase()}
+function nearMachine(){if(G.where!=='base'||G.placing)return null;let best=null,bd=1.9;for(const mc of MACH){const d=Math.hypot(mc.x+.5-P.x,mc.y+.5-P.y);if(d<bd){bd=d;best=mc}}
+ for(const key in G.base.b){const[x,y]=key.split(',').map(Number),d=Math.hypot(x+.5-P.x,y+.5-P.y);if(d<bd-.2){bd=d;const b=G.base.b[key];best={id:'bld:'+key,n:BT[b.t].n+' MK'+b.lv,x,y}}}return best}
 let openMach=null;
 function openMachine(mc){if(!mc||G.state!=='play')return;if(mc.id==='arm'){openArmory();return}openMach=mc.id;G.state='base';renderBase();show('ovBase',true)}
-function closeBase(){show('ovBase',false);openMach=null;G.state='play';hud();saveGame()}
+function closeBase(){show('ovBase',false);openMach=null;nearM=null;G.state='play';hud();saveGame()}
 function resRows(obj,keys,defs){return'<div class="rs">'+keys.filter(k=>obj[k]>0).map(k=>`<div style="border-left-color:${defs[k].c}"><span style="color:${defs[k].c}">${defs[k].n}</span><b>${fmtN(obj[k])}</b></div>`).join('')+'</div>'}
-function renderBase(){const body=$('bpBody'),S=G.store;$('bpH').textContent=MACH.find(m=>m.id===openMach).n;body.innerHTML='';
+function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.startsWith('bld:')?openMach.slice(4):null,BB=bk0&&G.base.b[bk0];if(bk0&&!BB){closeBase();return}
+ $('bpH').textContent=openMach==='build'?'▦ BUILD':BB?BT[BB.t].n+' MK'+BB.lv:MACH.find(m=>m.id===openMach).n;const sc=body.scrollTop;body.innerHTML='';
  const btn=(t,fn,col,dis)=>{const b=document.createElement('button');b.className='pb';b.textContent=t;if(col)b.style.borderColor=col;b.disabled=!!dis;b.onclick=()=>{fn();renderBase();hud()};return b};
  const rk=Object.keys(RES),bk=BAR_TIER;
+ if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Smelter → Storage Box. Products flow on their own, even while you are in the mine.</p>');
+  for(const t in BT){const lk=BREQ[t]?BREQ[t]():null,row=document.createElement('div');row.className='row';if(lk)row.style.opacity=.55;row.innerHTML=`<div><b>${BT[t].n}</b><small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row)}}
+ if(BB){const[x,y]=bk0.split(',').map(Number),links=N4.map(n=>[x+n[0],y+n[1]]).map(([a,b])=>a===MACH[0].x&&b===MACH[0].y?'Vault':bAt(a,b)?BT[bAt(a,b).t].n.replace(/^\S+\s/,''):null).filter(Boolean);
+  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p><p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
+  if(BB.t!=='box'){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+ITEM[j.out].n:'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
+  const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
+  row.appendChild(btn(mx?'MAX':lk?'LOCKED':'UPGRADE',()=>{if(mx||lk||!hasC(uc))return;payC(uc);BB.lv++;syncBuildings();openMach='bld:'+bk0},'#e3a53a',mx||!!lk||!hasC(uc)));body.appendChild(row);
+  body.appendChild(btn('DEMOLISH · 50% REFUND',()=>{for(const k in BT[BB.t].cost)S[k]=(S[k]||0)+Math.floor(BT[BB.t].cost[k]/2);for(const o of[BB.inv,BB.out])for(const k in o)S[k]=(S[k]||0)+o[k];delete G.base.b[bk0];syncBuildings();closeBase()},'#d8503a'))}
  if(openMach==='store'){const cw=Math.floor(cargoW());
   body.insertAdjacentHTML('beforeend',`<p>Cargo hold <b style="color:var(--am)">${cw}/${M.cap}</b></p>`+(cw?resRows(G.cargo,rk,RES):'<p style="color:#58666e">Cargo is empty.</p>'));
   body.appendChild(btn('DEPOSIT ALL',()=>{for(const k in G.cargo){S[k]=(S[k]||0)+G.cargo[k]}G.cargo={};toast('CARGO STORED')},'#e3a53a',!cw));
-  body.insertAdjacentHTML('beforeend','<p style="margin-top:10px">Storage (safe at base)</p>'+resRows(S,rk,RES)+resRows(S,bk,BARS))}
- if(openMach==='smelt'){body.insertAdjacentHTML('beforeend','<p>Smelt stored ore into bars. The smelter keeps working while you are in the mine.</p>');
-  for(const k of bk){const b=BARS[k],have=S[b.from]||0,q=G.smelt.q[k]||0,act=G.smelt.act&&G.smelt.act.bar===k;const row=document.createElement('div');row.className='sm-row';
-   row.innerHTML=`<span style="min-width:150px"><span style="color:${RES[b.from].c}">${b.need}× ${RES[b.from].n}</span> → <b style="color:${b.c}">${b.n}</b></span><span style="min-width:70px">ore ${have}</span><span style="min-width:60px">bars ${S[k]||0}</span><div class="pg"><i style="width:${act?(1-G.smelt.act.t/b.time)*100:0}%"></i></div><span style="min-width:44px">${q?'×'+q:''}</span>`;
-   row.appendChild(btn('+1',()=>{if((S[b.from]||0)<b.need)return;S[b.from]-=b.need;G.smelt.q[k]=(G.smelt.q[k]||0)+1},b.c,have<b.need));
-   row.appendChild(btn('ALL',()=>{const n=Math.floor((S[b.from]||0)/b.need);if(!n)return;S[b.from]-=n*b.need;G.smelt.q[k]=(G.smelt.q[k]||0)+n},b.c,have<b.need));body.appendChild(row)}}
+  body.insertAdjacentHTML('beforeend','<p style="margin-top:10px">Storage (safe at base)</p>'+resRows(S,rk,RES)+resRows(S,Object.keys(CRU),CRU)+resRows(S,bk,BARS))}
  if(openMach==='forge'){body.insertAdjacentHTML('beforeend',`<p>Forge rig upgrades from scrap and bars. Scrap <b style="color:var(--am)">${fmtN(S.scrap||0)}</b> · ${bk.map(k=>`<span style="color:${BARS[k].c}">${BARS[k].n} ${S[k]||0}</span>`).join(' · ')}</p>`);
-  for(const u of MU){const c=forgeCost(u),mx=u.lvl>=u.max,row=document.createElement('div');row.className='row';
-   row.innerHTML=`<div><b>${u.ic} ${u.n} <span style="color:#6f8088;font-size:14px">LV ${u.lvl}</span></b><small>${u.d}</small><small style="color:${mx?'#6f8088':has(c)?'#6fcf6a':'#d8503a'}">${mx?'MAX':costTxt(c)}</small></div>`;
-   row.appendChild(btn(mx?'MAX':'FORGE',()=>{if(mx||!has(c))return;pay(c);u.lvl++;u.f(u.lvl);burst(P.x,.8,P.y,20,[1,.6,.2],[1,.3,.1],3)},'#e3a53a',mx||!has(c)));body.appendChild(row)}}
+  body.insertAdjacentHTML('beforeend','<h2 style="margin-top:6px">RIG UPGRADE TREE</h2>');
+  const walk=(parent,depth)=>{for(const u of MU){const r=TREE[u.id];if((r?r[0]:null)!==parent)continue;const c=forgeCost(u),mx=u.lvl>=u.max,ok=unlocked(u),row=document.createElement('div');row.className='row';
+    row.style.marginLeft=(depth*22)+'px';if(depth)row.style.borderLeft='3px solid '+(ok?'#e3a53a':'#3a4650');if(!ok)row.style.opacity=.55;
+    row.innerHTML=`<div><b>${depth?'└ ':''}${u.ic} ${u.n} <span style="color:#6f8088;font-size:14px">LV ${u.lvl}</span></b><small>${u.d}</small><small style="color:${mx?'#6f8088':!ok?'#d8503a':has(c)?'#6fcf6a':'#d8503a'}">${mx?'MAX':!ok?'🔒 '+reqTxt(r):costTxt(c)}</small></div>`;
+    row.appendChild(btn(mx?'MAX':ok?'FORGE':'LOCKED',()=>{if(mx||!ok||!has(c))return;pay(c);u.lvl++;u.f(u.lvl);burst(P.x,.8,P.y,20,[1,.6,.2],[1,.3,.1],3)},'#e3a53a',mx||!ok||!has(c)));body.appendChild(row);walk(u.id,depth+1)}};
+  walk(null,0)}
+ if(openMach==='forge'){const BS=G.base;body.insertAdjacentHTML('beforeend','<h2 style="margin-top:12px">BASE UPGRADES</h2>');
+  const gRow=(title,desc,lvl,max,cost,fn,lock)=>{const mx=lvl>=max,row=document.createElement('div');row.className='row';if(lock)row.style.opacity=.55;row.innerHTML=`<div><b>${title} <span style="color:#6f8088;font-size:14px">LV ${lvl}</span></b><small>${desc}</small><small>${mx?'MAX':lock?'<span style="color:#d8503a">🔒 '+lock+'</span>':costTxtC(cost)}</small></div>`;row.appendChild(btn(mx?'MAX':lock?'LOCKED':'FORGE',()=>{if(mx||lock||!hasC(cost))return;payC(cost);fn()},'#e3a53a',mx||!!lock||!hasC(cost)));body.appendChild(row)};
+  gRow('⚡ Overclock','All base buildings work 25% faster',BS.oc,5,ocCost(BS.oc),()=>BS.oc++,BREQ.oc());
+  gRow('⌂ Recall Beacon','Recall to base faster ('+(3/(1+.6*BS.beacon)).toFixed(1)+'s now)',BS.beacon,3,beaconCost(BS.beacon),()=>BS.beacon++,BREQ.beacon());
+  const E=EXPAND[BS.lvl];if(E){const D=baseDims(),lk=BREQ.expand(),okP=G.pl>=E.pl&&!lk,row=document.createElement('div');row.className='row';row.style.borderColor='#5a3d8a';
+   row.innerHTML=`<div><b style="color:#b48cff">⬚ BASE EXPANSION ${BS.lvl+1}</b><small>Room grows from ${D.hw*2+1}×${D.hh*2+1} to ${(D.hw+3)*2+1}×${(D.hh+2)*2+1} tiles.</small><small style="color:${okP?'#6fcf6a':'#d8503a'}">Needs Prestige ${E.pl} (you have P${G.pl})${lk?' · 🔒 '+lk:''}</small><small>${costTxtC(E.c)}</small></div>`;
+   row.appendChild(btn('EXPAND',()=>{if(!okP||!hasC(E.c))return;payC(E.c);BS.lvl++;setWhere('base');G.blockDirty=true;rebuild();toast('BASE EXPANDED')},'#b48cff',!okP||!hasC(E.c)));body.appendChild(row)}
+  else body.insertAdjacentHTML('beforeend','<p>Base fully expanded.</p>')}
  if(openMach==='pad'){body.insertAdjacentHTML('beforeend',`<p>Return to the mine where you recalled. Cargo ${Math.floor(cargoW())}/${M.cap}.</p>`);
   body.appendChild(btn('⇪ DEPLOY TO MINE',deploy,'#4fd0d8'));const pr=document.createElement('div');pr.id='prestRow';pr.style.marginTop='10px';body.appendChild(pr);renderPrestige()}}
 /* ---------------- SOUND: hives fester behind the rock ---------------- */
@@ -871,19 +952,19 @@ function die(){if(G.state==='dead')return;G.state='dead';burst(P.x,.6,P.y,60,[.3
  setTimeout(()=>{newWorld(0,kept);G.state='dead';show('ovDead',true)},700)}
 function showBest(){const sv=hasSave(),bc=$('bCont');bc.style.display=sv?'':'none';$('bStart').textContent=sv?'NEW RUN':'START RUN';$('bStart').dataset.arm='';if(sv){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));bc.textContent='CONTINUE · P'+(s.g.pl||0)+' · '+fmtT(s.g.t)}catch(e){}}
 let b=null;try{b=JSON.parse(localStorage.getItem('hivebreaker_best')||'null')}catch(e){}$('best').textContent=b?`BEST · P${b.pl||0} · ${b.dist}m · ${b.kills} kills · ${b.hives} hives · ${fmtT(b.time)}`:''}
-function startRun(){resetState();setWhere('mine');G.pl=0;clearSave();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
+function startRun(){resetState();setWhere('mine');syncBuildings();G.pl=0;clearSave();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
 function goFull(){try{const el=document.documentElement;const p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen&&el.webkitRequestFullscreen();if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}}
 function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.devicePixelRatio||1):mode==='balanced'?1.15:1;
  $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
  if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
-function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=startRecall;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
+function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=startRecall;$('bBuild').onclick=()=>{if(G.state!=='play')return;endPlace();openMach='build';G.state='base';renderBase();show('ovBase',true)};$('bPlaceOk').onclick=confirmPlace;$('bPlaceX').onclick=endPlace;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{const Z=[1.3,1.8,2.4];G.zoom=Z[(Z.findIndex(z=>z>=G.zoom-.01)+1)%Z.length];try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){};G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
  $('bSnd').onclick=()=>{audioInit();setSound(!SND.on)};setSound(SND.on);addEventListener('pointerdown',audioInit,{once:true});$('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
  $('bSaveQ').onclick=()=>{saveGame();show('ovPause',false);G.state='title';showBest();show('ovTitle',true)};
  $('bCont').onclick=()=>{goFull();if(!loadGame())toast('SAVE NOT FOUND')};
- for(const id of['actBtn','bShop','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
+ for(const id of['actBtn','bShop','bBuild','bPlaceOk','bPlaceX','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
 if(window.__NULL)window.__boot=()=>{window.BABYLON=window.BABYLON||require('babylonjs')}; else loadLib(0);
 </script>
 </body></html>
