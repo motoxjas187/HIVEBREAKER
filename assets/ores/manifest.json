@@ -1,0 +1,74 @@
+{
+  "pack": "HIVEBREAKER Abyssal Ore Blocks",
+  "version": "1.0",
+  "dimensions": "approximately 1 x 1 x 1 units; centered at origin",
+  "format": "glTF Binary (.glb)",
+  "assets": [
+    {
+      "id": "iron",
+      "label": "Iron",
+      "category": "raw ore",
+      "file": "iron_ore_block.glb"
+    },
+    {
+      "id": "copper",
+      "label": "Copper",
+      "category": "raw ore",
+      "file": "copper_ore_block.glb"
+    },
+    {
+      "id": "coal",
+      "label": "Coal",
+      "category": "raw ore",
+      "file": "coal_ore_block.glb"
+    },
+    {
+      "id": "rare",
+      "label": "Rare",
+      "category": "raw ore",
+      "file": "rare_ore_block.glb"
+    },
+    {
+      "id": "silicon",
+      "label": "Silicon",
+      "category": "raw ore",
+      "file": "silicon_ore_block.glb"
+    },
+    {
+      "id": "uranium",
+      "label": "Uranium",
+      "category": "raw ore",
+      "file": "uranium_ore_block.glb"
+    },
+    {
+      "id": "steel",
+      "label": "Steel",
+      "category": "refined metal",
+      "file": "steel_ore_block.glb"
+    },
+    {
+      "id": "plate",
+      "label": "Plate",
+      "category": "manufactured plate",
+      "file": "plate_ore_block.glb"
+    },
+    {
+      "id": "circuit",
+      "label": "Circuit",
+      "category": "electronic component",
+      "file": "circuit_ore_block.glb"
+    },
+    {
+      "id": "cell",
+      "label": "Cell",
+      "category": "energy component",
+      "file": "cell_ore_block.glb"
+    },
+    {
+      "id": "rod",
+      "label": "Rod",
+      "category": "manufactured rod",
+      "file": "rod_ore_block.glb"
+    }
+  ]
+}
