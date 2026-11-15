@@ -118,7 +118,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 <script>
 'use strict';
 const LIBS=['https://cdn.jsdelivr.net/npm/babylonjs@9.36.0/babylon.js','https://unpkg.com/babylonjs@9.36.0/babylon.js','https://cdnjs.cloudflare.com/ajax/libs/babylonjs/8.0.0/babylon.js'];
-function loadLib(i){const s=document.createElement('script');s.src=LIBS[i];s.onload=()=>boot();s.onerror=()=>{if(i+1<LIBS.length)loadLib(i+1);else $('load').textContent='Could not load the 3D engine. Check your connection.'};document.head.appendChild(s)}
+function loadLib(i){const s=document.createElement('script');s.src=LIBS[i];s.onload=()=>{const l=document.createElement('script');l.src='https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.36.0/babylon.glTF2FileLoader.min.js';l.onload=l.onerror=()=>boot();document.head.appendChild(l)};s.onerror=()=>{if(i+1<LIBS.length)loadLib(i+1);else $('load').textContent='Could not load the 3D engine. Check your connection.'};document.head.appendChild(s)}
 const $=id=>document.getElementById(id);
 let B,engine,scene,camera,glow,shadowGen,dirLight,spot,pLight,hemi;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,rnd=Math.random;
@@ -137,7 +137,7 @@ const MAT=[null,
  {n:'Iron Ore',m:7,ore:24,c:[.46,.50,.58],g:1,mm:'#d8b48c'},
  {n:'Diamond Ore',m:14,ore:70,c:[.24,.36,.46],g:2,mm:'#3ad8d0'},
  {n:'Gold Relic',m:20,ore:45,c:[.48,.40,.20],g:3,mm:'#ffd23a'},
- {n:'Obsidian',m:9,ore:6,c:[.12,.10,.17]},
+ {n:'Obsidian',m:9,ore:6,c:[.12,.10,.17],g:9},
  {n:'Core Ore',m:30,ore:160,c:[.4,.12,.1],g:4,mm:'#ff3a2a'},
  {n:'Base Wall',m:1e9,ore:0,c:[.30,.34,.38],unbreak:1,mm:'#4a5560'},
  {n:'Hive Chitin',m:3.5,ore:8,c:[.3,.2,.28],g:5,mm:'#7a4a72'},
@@ -262,7 +262,7 @@ function threat(x,y){return(1+Math.hypot(x,y)/28)*(1+G.t/500)*(1+.4*(G.pl||0))}
 
 /* ---------------- BOOT / SCENE ---------------- */
 let blockM,fogM,floorM,oreM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
-const MAXI=6000;const buf={ore:[0,1,2,3,4,5,6,7,8].map(()=>new Float32Array(3000*16)),oreC:[0,1,2,3,4,5,6,7,8].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
+const MAXI=6000;const buf={ore:[0,1,2,3,4,5,6,7,8,9].map(()=>new Float32Array(3000*16)),oreC:[0,1,2,3,4,5,6,7,8,9].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
 class Pool{constructor(src){this.src=src;this.free=[];this.n=0}get(){let m=this.free.pop();if(!m)m=this.src.createInstance('i'+(this.n++));m.setEnabled(true);return m}put(m){m.setEnabled(false);this.free.push(m)}}
 function dyn(name,size,draw){const t=new B.DynamicTexture(name,{width:size,height:size},scene,true);const ctx=t.getContext();draw(ctx,size);t.update();return t}
 function noiseTex(name,size,base,var1,edge){return dyn(name,size,(g,S)=>{const im=g.createImageData(S,S);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const i=(y*S+x)*4;let v=base+(rnd()-.5)*var1+(vn(x*.06,y*.06,77)-.5)*var1*1.6;if(edge){const e=Math.min(x,y,S-1-x,S-1-y);if(e<edge)v*=.55+.45*e/edge;if(e<2)v*=1.35}v=clamp(v,0,255);im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}g.putImageData(im,0,0)})}
@@ -312,6 +312,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  floorM=B.MeshBuilder.CreateGround('flr',{width:1,height:1},scene);floorM.material=mats.flr;
  oreM=ORE_TEX.map((c,i)=>{const t=oreTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+i,{size:1},scene),mt=stdMat('orem'+i,[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;return m});
  SHELL_TEX.forEach((c,i)=>{const t=shellTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('shell'+i,{size:1},scene),mt=stdMat('shellm'+i,[1,1,1],null,.6);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
+ {const ob=B.MeshBuilder.CreateBox('obsid',{size:1},scene),om=stdMat('obsm',[.12,.1,.17],null,.5);om.diffuseTexture=rockT;ob.material=om;ob.receiveShadows=true;oreM.push(ob)}
  for(const m of [blockM,fogM,floorM,...oreM]){m.alwaysSelectAsActiveMesh=true;m.doNotSyncBoundingInfo=true;m.isPickable=false}
  floorM.receiveShadows=true;blockM.receiveShadows=true;
  // beam
@@ -321,7 +322,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  const am=B.MeshBuilder.CreateSphere('acid',{diameter:.24,segments:4},scene);am.material=stdMat('acm',[0,0,0],[.45,1,.2]);am.position.y=-60;APool=new Pool(am);
  const om=B.MeshBuilder.CreatePolyhedron('orb',{type:1,size:.13},scene);om.material=stdMat('orbm',[0,0,0],[1,.7,.15]);om.position.y=-60;OPool=new Pool(om);
  barProto=B.MeshBuilder.CreatePlane('bar',{width:1,height:.09},scene);barProto.rotation.x=Math.PI/2*.85;barProto.material=stdMat('barm',[0,0,0],[1,.25,.2]);barProto.material.disableLighting=true;barProto.position.y=-60;
- buildProtos();buildPlayer();buildHive();buildBase();
+ buildProtos();buildPlayer();buildHive();buildBase();loadOreModels();
  // particles
  const dot=dyn('dot',32,(g,S)=>{const q=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);q.addColorStop(0,'rgba(255,255,255,1)');q.addColorStop(.4,'rgba(255,255,255,.6)');q.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=q;g.fillRect(0,0,S,S)});dot.hasAlpha=true;
  for(let i=0;i<8;i++){const ps=new B.ParticleSystem('ps'+i,160,scene);ps.particleTexture=dot;ps.emitter=new B.Vector3(0,-50,0);ps.minEmitBox=new B.Vector3(-.15,0,-.15);ps.maxEmitBox=new B.Vector3(.15,.2,.15);ps.emitRate=0;ps.manualEmitCount=0;ps.blendMode=B.ParticleSystem.BLENDMODE_ADD;ps.gravity=new B.Vector3(0,-14,0);ps.direction1=new B.Vector3(-1,1.5,-1);ps.direction2=new B.Vector3(1,3.5,1);ps.minEmitPower=1;ps.maxEmitPower=3;ps.minLifeTime=.2;ps.maxLifeTime=.55;ps.minSize=.06;ps.maxSize=.18;ps.updateSpeed=.016;ps.colorDead=new B.Color4(0,0,0,0);ps.start();PS.push(ps)}
@@ -460,7 +461,7 @@ function setM(a,i,x,y,z,sx,sy,sz,ry){const o=i*16,c=Math.cos(ry||0),s=Math.sin(r
 function setC(a,i,r,g,b){a[i*4]=r;a[i*4+1]=g;a[i*4+2]=b;a[i*4+3]=1}
 function pushBuf(mesh,mat,col,n){if(n<=0){mesh.isVisible=false;return}mesh.isVisible=true;mesh.thinInstanceSetBuffer('matrix',mat.subarray(0,n*16),16,false);if(col)mesh.thinInstanceSetBuffer('color',col.subarray(0,n*4),4,false)}
 function rebuild(){G.blockDirty=false;const px=Math.floor(P.x),py=Math.floor(P.y),z=G.zoom,RX=Math.ceil(19*z),Y0=Math.ceil(11*z),Y1=Math.ceil(15*z);
- win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=[0,0,0,0,0,0,0,0,0];labelList=[];
+ win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=[0,0,0,0,0,0,0,0,0,0];labelList=[];
  const hv=activeHives.filter(h=>h.alive);
  for(let y=win.y0;y<=win.y1;y++)for(let x=win.x0;x<=win.x1;x++){const k=K(x,y),rev=revealed.has(k),open=isOpen(x,y);
   if(nb>=MAXI||nf>=MAXI||nl>=MAXI)break;
@@ -780,8 +781,29 @@ function syncBuildings(){for(const m of bInst)m.dispose();bInst=[];if(!G.base||!
  for(const key in BS){const b=BS[key],[x,y]=key.split(',').map(Number),P0=BPROTO[b.t];add(P0.b,x,y,'b',b).scaling.setAll(.92+b.lv*.04);if(P0.r)add(P0.r,x,y,'r',b).position.y=.58;if(P0.g)add(P0.g,x,y,'g',b)}
  const linked=(x,y)=>!!bAt(x,y)||(x===MACH[0].x&&y===MACH[0].y);
  for(const key in BS){const[x,y]=key.split(',').map(Number);for(const[dx,dy]of[[1,0],[0,1],[-1,0],[0,-1]]){const nx=x+dx,ny=y+dy;if(!linked(nx,ny))continue;if(bAt(nx,ny)&&(dx<0||dy<0))continue;const c=CONN.createInstance('ci');c.parent=baseRoot;c.position.set(x+.5+dx*.5,0,y+.5+dy*.5);c.rotation.y=dx?0:Math.PI/2;c.scaling.x=.55;bInst.push(c)}}}
-function updateBaseVis(dt){for(const m of bInst){if(m.tag==='r'&&m.bref.job)m.rotation.x+=dt*10;if(m.tag==='g'){m.isVisible=!!m.bref.job;if(m.bref.job)m.scaling.y=1+Math.sin(G.t*30+m.position.x)*.15}}
+function updateBaseVis(dt){updateItemsVis(dt);for(const m of bInst){if(m.tag==='r'&&m.bref.job)m.rotation.x+=dt*10;if(m.tag==='g'){m.isVisible=!!m.bref.job;if(m.bref.job)m.scaling.y=1+Math.sin(G.t*30+m.position.x)*.15}}
  if(G.placing){const t=placeTarget(),ok=t&&placeValid(t[0],t[1]);GHOST.setEnabled(!!t);if(t){GHOST.position.set(t[0]+.5,.05,t[1]+.5);GHOST.material.emissiveColor.set(ok?.2:1,ok?1:.2,ok?.4:.2)}$('bPlaceOk').disabled=!ok||!hasC(BT[G.placing].cost)}}
+/* ---- Abyssal ore block models (assets/ores/glb): visuals only, no resource or mining logic ---- */
+// world blocks: draw group index -> model; base products: item -> model
+const ORE_GLB={world:{0:'copper',1:'iron',2:'silicon',3:'cell',4:'rare',9:'coal'},items:{bcu:'plate',bfe:'steel',bau:'rod',bdi:'circuit',bco:'uranium'}};
+const GLBM={},flying=[],boxShow=new Map();
+async function loadOreModels(){if(!B.SceneLoader||!B.SceneLoader.ImportMeshAsync||window.__NULL)return;
+ const names=[...new Set([...Object.values(ORE_GLB.world),...Object.values(ORE_GLB.items)])];
+ await Promise.all(names.map(async n=>{try{const r=await B.SceneLoader.ImportMeshAsync('','assets/ores/glb/',n+'_ore_block.glb',scene);
+  const ms=r.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0);ms.forEach(m=>m.computeWorldMatrix(true));
+  const mm=B.Mesh.MergeMeshes(ms,true,true,undefined,false,true);for(const m of r.meshes)if(!m.isDisposed())m.dispose();
+  mm.name='glb_'+n;mm.isPickable=false;mm.receiveShadows=true;GLBM[n]=mm;
+  for(const sm of(mm.material&&mm.material.subMaterials)||[mm.material])if(sm&&'albedoColor'in sm){sm.directIntensity=1.6;sm.environmentIntensity=.6}}catch(e){console.warn('ore model',n,e)}}));
+ for(const g in ORE_GLB.world){const m=GLBM[ORE_GLB.world[g]];if(!m)continue;const old=oreM[g];oreM[g]=m;m.alwaysSelectAsActiveMesh=true;m.doNotSyncBoundingInfo=true;old.dispose()}
+ for(const it in ORE_GLB.items){const m=GLBM[ORE_GLB.items[it]];if(m)m.position.y=-60}
+ G.blockDirty=true;if(P)rebuild()}
+function flyItem(ax,ay,bx,by,it){const m=GLBM[ORE_GLB.items[it]];if(!m||G.where!=='base'||flying.length>30)return;const i=m.createInstance('fly');i.scaling.setAll(.3);flying.push({m:i,ax:ax+.5,ay:ay+.5,bx:bx+.5,by:by+.5,t:0})}
+function updateItemsVis(dt){for(let k=flying.length-1;k>=0;k--){const f=flying[k];f.t+=dt*1.8;if(f.t>=1){f.m.dispose();flying.splice(k,1);continue}
+  f.m.position.set(f.ax+(f.bx-f.ax)*f.t,.95+Math.sin(Math.PI*f.t)*.55,f.ay+(f.by-f.ay)*f.t);f.m.rotation.y+=dt*6}
+ // each storage box shows the last product it received on its lid
+ for(const[key,s]of boxShow){const b=G.base.b[key];if(!b||b.last!==s.it){s.m.dispose();boxShow.delete(key)}}
+ for(const key in G.base.b){const b=G.base.b[key];if(b.t!=='box'||!b.last||boxShow.has(key))continue;const m=GLBM[ORE_GLB.items[b.last]];if(!m)continue;const[x,y]=key.split(',').map(Number),i=m.createInstance('show');i.parent=baseRoot;i.scaling.setAll(.34);i.position.set(x+.5,.85,y+.5);boxShow.set(key,{it:b.last,m:i})}
+ for(const s of boxShow.values())s.m.rotation.y+=dt*.8}
 /* ---- build mode ---- */
 function placeTarget(){if(G.where!=='base')return null;return[Math.floor(P.x+Math.cos(P.ang)*1.1),Math.floor(P.y+Math.sin(P.ang)*1.1)]}
 function placeValid(x,y){if(!baseOpen(x,y)||bAt(x,y))return false;for(const mc of MACH){if(Math.abs(mc.x-x)<=(mc.id==='pad'?1:0)&&Math.abs(mc.y-y)<=(mc.id==='pad'?1:0))return false}return true}
@@ -818,7 +840,7 @@ function smeltTick(dt){const BS=G.base;if(!BS)return;BS.acc=(BS.acc||0)+dt;if(BS
   if(b.job){b.job.t-=st*bSpeed(b);if(b.job.t<=0){b.out[b.job.out]=(b.out[b.job.out]||0)+b.job.n;b.job=null}}
   // push products: keep ones a neighbouring building will pull, send the rest to a port
   for(const it in b.out){if(!(b.out[it]>0))continue;const used=nb.some(([nx,ny])=>{const n=bAt(nx,ny);return n&&n.t!=='box'&&wants(n).includes(it)});
-   if(used&&b.out[it]<6)continue;const p=nb.find(([nx,ny])=>isPort(nx,ny));if(p){S[it]=(S[it]||0)+b.out[it];flowFx(x,y,p[0],p[1],it);b.out[it]=0}}}
+   if(used&&b.out[it]<6)continue;const p=nb.find(([nx,ny])=>isPort(nx,ny));if(p){S[it]=(S[it]||0)+b.out[it];flowFx(x,y,p[0],p[1],it);if(ORE_GLB.items[it]){flyItem(x,y,p[0],p[1],it);const pb=bAt(p[0],p[1]);if(pb)pb.last=it}b.out[it]=0}}}
  if(G.state==='base'&&openMach&&openMach.startsWith('bld:'))renderBase()}
 function nearMachine(){if(G.where!=='base'||G.placing)return null;let best=null,bd=1.9;for(const mc of MACH){const d=Math.hypot(mc.x+.5-P.x,mc.y+.5-P.y);if(d<bd){bd=d;best=mc}}
  for(const key in G.base.b){const[x,y]=key.split(',').map(Number),d=Math.hypot(x+.5-P.x,y+.5-P.y);if(d<bd-.2){bd=d;const b=G.base.b[key];best={id:'bld:'+key,n:BT[b.t].n+' MK'+b.lv,x,y}}}return best}

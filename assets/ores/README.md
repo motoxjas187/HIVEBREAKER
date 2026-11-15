@@ -17,3 +17,22 @@ const result = await BABYLON.SceneLoader.ImportMeshAsync(
 ```
 
 Import the glTF loader in your project as required by its Babylon.js build.
+
+## In the game
+`index.html` loads these models with Babylon's glTF loader (visual only; resource and mining logic are unchanged):
+
+| Model | Used for |
+|---|---|
+| copper | Copper Ore blocks |
+| iron | Iron Ore blocks |
+| silicon | Diamond Ore blocks |
+| cell | Gold Relic blocks |
+| rare | Core Ore blocks |
+| coal | Obsidian blocks |
+| plate | Copper Bar (base product) |
+| steel | Iron Bar |
+| rod | Gold Bar |
+| circuit | Cut Diamond |
+| uranium | Core Ingot |
+
+Products fly from smelters to storage, and each Storage Box shows the last product it received on its lid. If the models fail to load, the game falls back to its built-in pixel textures.
