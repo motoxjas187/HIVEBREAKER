@@ -93,7 +93,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
  <h1>HIVE<span>BREAKER</span></h1>
  <p>You wake in a 4×4 pocket. Everything else is rock, and the dark hides an endless world of alien hives.</p>
  <p><b style="color:var(--am)">Dig</b> by pushing into rock or aiming at it. Every block shows its health, and rock gets tougher the farther you go and the longer you survive. Ore fills your cargo hold: <b style="color:var(--cy)">recall to base</b> (⌂ BASE) to store it, smelt it into bars and forge rig upgrades. Gold <b style="color:#ffd23a">relic</b> blocks give one free.</p>
- <p><b style="color:var(--rd)">Hives</b> are buried in the rock. Kills drop <b style="color:var(--am)">guns and attachments</b> that get better the deeper you go. Queens, brutes and hives drop <b style="color:#2ff5c8">Unique</b> guns. Fuse and merge them in the ⚔ ARMS screen. A hive you destroy grows back once it's out of sight, and it sends raids that tunnel after you.</p>
+ <p><b style="color:var(--rd)">Hives</b> are buried in the rock. Kills drop <b style="color:var(--am)">guns and attachments</b> that get better the deeper you go. Every hive is wrapped in a shell of tougher blocks that tells you its strength: purple chitin, amber resin, red flesh, then black carapace. Listen for it festering behind the rock. Queens, brutes and hives drop <b style="color:#2ff5c8">Unique</b> guns. Fuse and merge them in the ⚔ ARMS screen. A hive you destroy grows back once it's out of sight, and it sends raids that tunnel after you.</p>
  <p style="font-size:14px;color:#6f8088">Touch: left side moves, right side aims · Keys: WASD, mouse aims, click fires</p>
  <div id="best" style="font-size:15px;color:#8fa0a8"></div>
  <button class="go" id="bCont" style="display:none">CONTINUE</button><br><button class="go" id="bStart">START RUN</button>
@@ -108,7 +108,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 <div class="ov" id="ovBase"><div class="armw"><div class="armh"><h2 id="bpH">BASE</h2><button class="pb" id="bBaseX">BACK</button></div><div id="bpBody"></div></div></div>
 <button id="actBtn" class="pb"></button>
 <div id="recallBar"><i></i><span>RECALLING TO BASE</span></div>
-<div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">ABANDON WORLD</button></div></div>
+<div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSnd">SOUND: ON</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">ABANDON WORLD</button></div></div>
 <div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><p>The world is lost. You keep every rig upgrade, your armory, your base storage and your prestige. 90% of the cargo you were carrying is lost.</p><div class="kv" id="deadStats"></div><button class="go" id="bAgain">REDEPLOY</button></div></div>
 <div id="load">LOADING ENGINE…</div>
 
@@ -137,7 +137,13 @@ const MAT=[null,
  {n:'Gold Relic',m:20,ore:45,c:[.48,.40,.20],g:3,mm:'#ffd23a'},
  {n:'Obsidian',m:9,ore:6,c:[.12,.10,.17]},
  {n:'Core Ore',m:30,ore:160,c:[.4,.12,.1],g:4,mm:'#ff3a2a'},
- {n:'Base Wall',m:1e9,ore:0,c:[.30,.34,.38],unbreak:1,mm:'#4a5560'}];
+ {n:'Base Wall',m:1e9,ore:0,c:[.30,.34,.38],unbreak:1,mm:'#4a5560'},
+ {n:'Hive Chitin',m:3.5,ore:8,c:[.3,.2,.28],g:5,mm:'#7a4a72'},
+ {n:'Hive Resin',m:7,ore:18,c:[.55,.36,.1],g:6,mm:'#c88a2a'},
+ {n:'Hive Flesh',m:12,ore:30,c:[.45,.12,.14],g:7,mm:'#c02838'},
+ {n:'Hive Carapace',m:20,ore:50,c:[.08,.1,.14],g:8,mm:'#2aa088'}];
+// hive shell textures by tier: [base, vein]
+const SHELL_TEX=[[[.30,.20,.28],[.68,.36,.62]],[[.52,.33,.09],[1,.72,.2]],[[.42,.10,.12],[1,.28,.32]],[[.07,.09,.13],[.3,.95,.75]]];
 const BX=30000,BY=30000;   // base level lives far from the mine
 const RES={scrap:{n:'Scrap',c:'#aab4bc',w:.1},cu:{n:'Copper Ore',c:'#c8692e',w:1},fe:{n:'Iron Ore',c:'#d8b48c',w:1},di:{n:'Rough Diamond',c:'#3ad8d0',w:1},au:{n:'Gold Ore',c:'#ffd23a',w:1},co:{n:'Core Ore',c:'#ff3a2a',w:1}};
 const BARS={bcu:{n:'Copper Bar',from:'cu',need:2,time:2,c:'#e07a3a'},bfe:{n:'Iron Bar',from:'fe',need:2,time:3,c:'#e8dccb'},bau:{n:'Gold Bar',from:'au',need:2,time:4,c:'#ffd23a'},bdi:{n:'Cut Diamond',from:'di',need:1,time:5,c:'#6ff6f0'},bco:{n:'Core Ingot',from:'co',need:2,time:7,c:'#ff5a3a'}};
@@ -155,6 +161,8 @@ function matAt(x,y){if(x>20000)return 10;const k=K(x,y);let t=matCache.get(k);if
  if(d>32&&vn(x*.38,y*.38,5)>.83)t=6;
  if(d>12&&h2(x,y,6)<.0018)t=7;
  if(d>60&&vn(x*.45,y*.45,7)>.86)t=9;
+ // hive shell: a ring of tier-specific blocks surrounds every hive cavity
+ {const cx=Math.floor(x/CH),cy=Math.floor(y/CH);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const hv=hiveAt(cx+i,cy+j);if(!hv)continue;const dd=Math.hypot(x-hv.x,y-hv.y),rr=hv.r+.6,sh=hv.r+2.2+h2(x,y,31)*.9;if(dd>rr&&dd<=sh)t=10+Math.min(4,1+Math.floor(hv.d/55))}}
  matCache.set(k,t);return t}
 function timeF(){return 1+G.t/360}
 const BLOCK_BASE=6;
@@ -231,11 +239,19 @@ function threat(x,y){return(1+Math.hypot(x,y)/28)*(1+G.t/500)*(1+.4*(G.pl||0))}
 
 /* ---------------- BOOT / SCENE ---------------- */
 let blockM,fogM,floorM,oreM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
-const MAXI=6000;const buf={ore:[0,1,2,3,4].map(()=>new Float32Array(3000*16)),oreC:[0,1,2,3,4].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
+const MAXI=6000;const buf={ore:[0,1,2,3,4,5,6,7,8].map(()=>new Float32Array(3000*16)),oreC:[0,1,2,3,4,5,6,7,8].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
 class Pool{constructor(src){this.src=src;this.free=[];this.n=0}get(){let m=this.free.pop();if(!m)m=this.src.createInstance('i'+(this.n++));m.setEnabled(true);return m}put(m){m.setEnabled(false);this.free.push(m)}}
 function dyn(name,size,draw){const t=new B.DynamicTexture(name,{width:size,height:size},scene,true);const ctx=t.getContext();draw(ctx,size);t.update();return t}
 function noiseTex(name,size,base,var1,edge){return dyn(name,size,(g,S)=>{const im=g.createImageData(S,S);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const i=(y*S+x)*4;let v=base+(rnd()-.5)*var1+(vn(x*.06,y*.06,77)-.5)*var1*1.6;if(edge){const e=Math.min(x,y,S-1-x,S-1-y);if(e<edge)v*=.55+.45*e/edge;if(e<2)v*=1.35}v=clamp(v,0,255);im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}g.putImageData(im,0,0)})}
 // 16x16 pixel-art ore block: grey stone with clusters of ore flecks, nearest-neighbour sampled.
+// Organic pixel-art shell: plated base with glowing veins and dark pores; tier sets the colours.
+function shellTextures(i,base,vein){const S=64,P=4,N=16,mk=n=>new B.DynamicTexture(n,{width:S,height:S},scene,false,B.Texture.NEAREST_SAMPLINGMODE),d=mk('shD'+i),e=mk('shE'+i),gd=d.getContext(),ge=e.getContext();
+ const V=new Set();for(let k=0;k<3+i;k++){let x=(Math.random()*N)|0,y=(Math.random()*N)|0;for(let j=0;j<10;j++){V.add(x+','+y);if(Math.random()<.5)x=(x+(Math.random()<.5?1:N-1))%N;else y=(y+(Math.random()<.5?1:N-1))%N}}
+ const rgb=(a,m)=>`rgb(${clamp(a[0]*m*255,0,255)|0},${clamp(a[1]*m*255,0,255)|0},${clamp(a[2]*m*255,0,255)|0})`;ge.fillStyle='#000';ge.fillRect(0,0,S,S);
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){const plate=((x>>2)+(y>>2)+(i===0?(y>>2):0))%2,seam=(x%4===0)||(y%4===0);let m=(.8+Math.random()*.25)*(plate?1:.88)*(seam&&i!==2?.72:1);
+  if(V.has(x+','+y)){gd.fillStyle=rgb(vein,.85+Math.random()*.2);ge.fillStyle=rgb(vein,.6)}else if(Math.random()<.06){gd.fillStyle=rgb(base,.4);ge.fillStyle='#000'}else{gd.fillStyle=rgb(base,m);ge.fillStyle='#000'}
+  gd.fillRect(x*P,y*P,P,P);ge.fillRect(x*P,y*P,P,P)}
+ d.update(false);e.update(false);return{d,e}}
 function oreTextures(i,c,hi){const S=64,P=4,N=16,mk=n=>new B.DynamicTexture(n,{width:S,height:S},scene,false,B.Texture.NEAREST_SAMPLINGMODE),d=mk('oreD'+i),e=mk('oreE'+i),gd=d.getContext(),ge=e.getContext();
  const ore=new Set(),cl=6+i;for(let k=0;k<cl;k++){let x=1+((Math.random()*(N-2))|0),y=1+((Math.random()*(N-2))|0);const n=3+((Math.random()*3)|0);for(let j=0;j<n;j++){ore.add(x+','+y);x=clamp(x+((Math.random()*3)|0)-1,1,N-2);y=clamp(y+((Math.random()*3)|0)-1,1,N-2)}}
  ge.fillStyle='#000';ge.fillRect(0,0,S,S);const rgb=(a,m)=>`rgb(${clamp(a[0]*m*255,0,255)|0},${clamp(a[1]*m*255,0,255)|0},${clamp(a[2]*m*255,0,255)|0})`;
@@ -272,6 +288,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  fogM=B.MeshBuilder.CreateBox('fog',{size:1},scene);fogM.material=mats.fog;
  floorM=B.MeshBuilder.CreateGround('flr',{width:1,height:1},scene);floorM.material=mats.flr;
  oreM=ORE_TEX.map((c,i)=>{const t=oreTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+i,{size:1},scene),mt=stdMat('orem'+i,[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;return m});
+ SHELL_TEX.forEach((c,i)=>{const t=shellTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('shell'+i,{size:1},scene),mt=stdMat('shellm'+i,[1,1,1],null,.6);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
  for(const m of [blockM,fogM,floorM,...oreM]){m.alwaysSelectAsActiveMesh=true;m.doNotSyncBoundingInfo=true;m.isPickable=false}
  floorM.receiveShadows=true;blockM.receiveShadows=true;
  // beam
@@ -288,7 +305,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  setupInput();setupUI();applyGfx();
  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();if(G.state==='play')pause();toast('GRAPHICS PAUSED · RESTORING')});
  cv.addEventListener('webglcontextrestored',()=>{try{engine.resize();scene.resetCachedMaterial();toast('GRAPHICS RESTORED')}catch(e){console.warn('WebGL restore',e)}});
- scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);if(G.state==='base'&&openMach==='smelt'){G.smR=(G.smR||0)-dt;if(G.smR<=0){G.smR=.25;renderBase()}}}updateCamera(dt);updateLabels()});
+ scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);if(G.state==='base'&&openMach==='smelt'){G.smR=(G.smR||0)-dt;if(G.smR<=0){G.smR=.25;renderBase()}}}updateCamera(dt);updateLabels()});
  engine.runRenderLoop(()=>scene.render());
  addEventListener('resize',()=>engine.resize());
  resetState();G.state='title';showBest();placeCamera();rebuild();
@@ -420,7 +437,7 @@ function setM(a,i,x,y,z,sx,sy,sz,ry){const o=i*16,c=Math.cos(ry||0),s=Math.sin(r
 function setC(a,i,r,g,b){a[i*4]=r;a[i*4+1]=g;a[i*4+2]=b;a[i*4+3]=1}
 function pushBuf(mesh,mat,col,n){if(n<=0){mesh.isVisible=false;return}mesh.isVisible=true;mesh.thinInstanceSetBuffer('matrix',mat.subarray(0,n*16),16,false);if(col)mesh.thinInstanceSetBuffer('color',col.subarray(0,n*4),4,false)}
 function rebuild(){G.blockDirty=false;const px=Math.floor(P.x),py=Math.floor(P.y),z=G.zoom,RX=Math.ceil(19*z),Y0=Math.ceil(11*z),Y1=Math.ceil(15*z);
- win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=[0,0,0,0,0];labelList=[];
+ win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=[0,0,0,0,0,0,0,0,0];labelList=[];
  const hv=activeHives.filter(h=>h.alive);
  for(let y=win.y0;y<=win.y1;y++)for(let x=win.x0;x<=win.x1;x++){const k=K(x,y),rev=revealed.has(k),open=isOpen(x,y);
   if(nb>=MAXI||nf>=MAXI||nl>=MAXI)break;
@@ -757,6 +774,28 @@ function renderBase(){const body=$('bpBody'),S=G.store;$('bpH').textContent=MACH
    row.appendChild(btn(mx?'MAX':'FORGE',()=>{if(mx||!has(c))return;pay(c);u.lvl++;u.f(u.lvl);burst(P.x,.8,P.y,20,[1,.6,.2],[1,.3,.1],3)},'#e3a53a',mx||!has(c)));body.appendChild(row)}}
  if(openMach==='pad'){body.insertAdjacentHTML('beforeend',`<p>Return to the mine where you recalled. Cargo ${Math.floor(cargoW())}/${M.cap}.</p>`);
   body.appendChild(btn('⇪ DEPLOY TO MINE',deploy,'#4fd0d8'));const pr=document.createElement('div');pr.id='prestRow';pr.style.marginTop='10px';body.appendChild(pr);renderPrestige()}}
+/* ---------------- SOUND: hives fester behind the rock ---------------- */
+const SND={ctx:null,on:(()=>{try{return localStorage.getItem('hb_snd')!=='0'}catch(e){return true}})(),master:null,hive:null};
+function audioInit(){if(SND.ctx)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=SND.ctx=new C();SND.master=c.createGain();SND.master.gain.value=SND.on?.9:0;SND.master.connect(c.destination);
+ const nb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),dd=nb.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;SND.noise=nb;
+ const src=c.createBufferSource();src.buffer=nb;src.loop=true;const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=260;bp.Q.value=4;
+ const lfo=c.createOscillator();lfo.frequency.value=1.6;const lg=c.createGain();lg.gain.value=150;lfo.connect(lg);lg.connect(bp.frequency);
+ const drone=c.createOscillator();drone.type='sawtooth';drone.frequency.value=44;const dg=c.createGain();dg.gain.value=.22;drone.connect(dg);
+ const pulse=c.createOscillator();pulse.frequency.value=.7;const pg=c.createGain();pg.gain.value=.12;pulse.connect(pg);pg.connect(dg.gain);
+ const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=400;const g=c.createGain();g.gain.value=0;const pan=c.createStereoPanner?c.createStereoPanner():null;
+ src.connect(bp);bp.connect(lp);dg.connect(lp);lp.connect(g);if(pan){g.connect(pan);pan.connect(SND.master)}else g.connect(SND.master);
+ src.start();lfo.start();drone.start();pulse.start();SND.hive={g,lp,pan,drone}}catch(e){SND.ctx=null}}
+function setSound(on){SND.on=on;try{localStorage.setItem('hb_snd',on?'1':'0')}catch(e){}if(SND.master)SND.master.gain.value=on?.9:0;$('bSnd').textContent='SOUND: '+(on?'ON':'OFF')}
+function chitter(vol,pan,muffled){const c=SND.ctx,t=c.currentTime,s=c.createBufferSource();s.buffer=SND.noise;const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=muffled?700+Math.random()*300:2200+Math.random()*1800;bp.Q.value=9;
+ const g=c.createGain(),n=2+((Math.random()*4)|0);g.gain.setValueAtTime(0,t);for(let i=0;i<n;i++){const tt=t+i*(.035+Math.random()*.03);g.gain.linearRampToValueAtTime(vol,tt+.004);g.gain.linearRampToValueAtTime(0,tt+.025)}
+ let out=g;s.connect(bp);bp.connect(g);if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;g.connect(p);out=p}out.connect(SND.master);s.start(t,Math.random());s.stop(t+n*.07+.05)}
+function audioTick(dt){if(!SND.ctx||!SND.hive)return;if(SND.ctx.state==='suspended'&&G.state==='play')SND.ctx.resume();const H=SND.hive,t=SND.ctx.currentTime;let best=null,bd=16;
+ const live=G.where==='mine'&&G.state==='play';if(live)for(const h of activeHives){if(!h.alive)continue;const d=Math.hypot(h.x+.5-P.x,h.y+.5-P.y);if(d<bd){bd=d;best=h}}
+ let vol=0,pan=0,muff=true;if(best){vol=Math.pow(1-bd/16,2)*.55*(1+Math.min(1,best.count/6)*.6);pan=clamp((best.x+.5-P.x)/8,-1,1);muff=!los(P.x,P.y,best.x+.5,best.y+.5)}
+ H.g.gain.setTargetAtTime(vol,t,.3);H.lp.frequency.setTargetAtTime(muff?380:1800,t,.3);if(H.pan)H.pan.pan.setTargetAtTime(pan,t,.3);H.drone.frequency.setTargetAtTime(38+(best?best.tier*6:0),t,.6);
+ if(best&&vol>.02&&rnd()<dt*(1.4+best.count*.5))chitter(vol*.7,pan,muff);
+ if(live&&rnd()<dt*1.5)for(const e of enemies){if(e.dead||e.b.isVisible)continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<9){chitter(.22*(1-d/9),clamp((e.x-P.x)/6,-1,1),true);break}}
+ if(best&&!best.known&&!best.heard&&bd<12){best.heard=true;toast('YOU HEAR SOMETHING FESTERING NEARBY…')}}
 /* ---------------- CAMERA ---------------- */
 let camX=0,camY=0;function placeCamera(){camX=P?P.x:0;camY=P?P.y:0}
 function updateCamera(dt){if(!P)return;camX+=(P.x-camX)*Math.min(1,dt*6);camY+=(P.y-camY)*Math.min(1,dt*6);let sx=0,sy=0;if(G.shake>0){G.shake-=dt;sx=(rnd()-.5)*G.shake;sy=(rnd()-.5)*G.shake}
@@ -841,7 +880,7 @@ function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.
 function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=startRecall;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{const Z=[1.3,1.8,2.4];G.zoom=Z[(Z.findIndex(z=>z>=G.zoom-.01)+1)%Z.length];try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){};G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
- $('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
+ $('bSnd').onclick=()=>{audioInit();setSound(!SND.on)};setSound(SND.on);addEventListener('pointerdown',audioInit,{once:true});$('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
  $('bSaveQ').onclick=()=>{saveGame();show('ovPause',false);G.state='title';showBest();show('ovTitle',true)};
  $('bCont').onclick=()=>{goFull();if(!loadGame())toast('SAVE NOT FOUND')};
  for(const id of['actBtn','bShop','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
