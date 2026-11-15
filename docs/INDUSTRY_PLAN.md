@@ -146,7 +146,8 @@ Rig upgrades, building marks, base upgrades and expansion keep the same tree and
 
 1. ✅ **Data model and migration (done 2026-11-15):** recipe table drives the Crusher and Furnace; Smelter renamed Furnace; Copper/Iron Bar renamed Copper/Iron Plate (same keys, no save changes); Coal, Silicon, Rare Ore and Uranium spawn in the world and are stored but not yet processable; dedicated models for every ore and product. Mark gate: MK1 copper/coal, MK2 iron/silicon, MK3 gold/diamond, MK4 core/rare, MK5 uranium.
    Original scope: item registry, recipe table, machine table, save migration. MK becomes throughput-only. Furnace replaces Smelter (same chain behavior).
-2. **Power grid:** coal ore in the world, Coal Generator, grid by adjacency, power HUD, under-power slowdown.
+2. ✅ **Power grid (done 2026-11-15):** Coal Generator (12 power at MK1, +50% per mark, 15 s per coal, 1 ash per 3 coal, burns only on demand, takes coal from touching buildings or any storage on its grid); grids are connected chains including the Vault and boxes; Crusher draws 4 and slows proportionally when short; Furnace burns coal (or scrap) as fuel; base HUD shows ⚡ supply/demand.
+   Original scope: coal ore in the world, Coal Generator, grid by adjacency, power HUD, under-power slowdown.
 3. **Multi-machine chains and byproducts:** Washer, Settling Tank, Steel Mill, Electric Smelter, Assembler, Incinerator; slag/ash/sludge handling.
 4. **Nuclear and rare:** uranium ore, Centrifuge, Rod Fabricator, Reactor, Waste Vault, Plasma Refinery, Battery Bank.
 5. **Re-tier spending and balance:** swap Forge/mark/expansion costs to the new tier materials; tune rates.
