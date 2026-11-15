@@ -14,7 +14,7 @@ Open `index.html` in a modern browser. It loads Babylon.js from a CDN, so it nee
 
 ## Systems
 - **Blocks:** every block shows its health like Brickbreaker. Health scales with distance from the start and with run time.
-- **Ore:** mining drops ore, which buys rig upgrades (drill power, speed, reach, yield, magnet, hull, scanner). Gold relic blocks give a free upgrade.
+- **Cargo and base:** mining fills a limited cargo hold with scrap and ore (copper, iron, diamond, gold, core). Recall (⌂ BASE, 3 s, interrupted by damage) to the base level, deposit at **Storage**, smelt ore into bars at the **Smelter** (keeps running while you mine), and forge rig upgrades at the **Forge** from scrap plus bars (copper → iron → gold → diamond → core as levels rise). The **Armory Rack** upgrades guns; the **Deploy Pad** returns you to where you recalled and holds Prestige. Dying loses 90% of carried cargo; base storage is safe. Gold relic blocks still give a free upgrade.
 - **Guns and attachments:** kills drop loot from HORDEFALL's weapon system (`weapons/weapons.js`): 16 gun bases, 11 rarities, 21 prefixes, 15 attachments and 5 elements. Loot quality scales with distance from the start, run time and prestige. Queens, brutes, elites and hives drop Unique guns with special perks.
 - **Armory (⚔ ARMS):** equip 2 guns that fire together, attach and detach parts, upgrade gun levels with ore, fuse 3 items of the same rarity into the next rarity, merge 2 copies of a gun into a higher level, auto-fuse and salvage. The armory is saved and kept through death and prestige.
 - **Enemy squads:** stalkers, spitters, brutes, flyers and queens gather at their hive, hunt as a group once you're spotted, flank, keep their distance, retreat to heal, and dig toward you.
