@@ -21,7 +21,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .rt{background:var(--pn);border:1px solid var(--ln);padding:1px 5px;display:flex;align-items:center;gap:4px;font-size:12px;color:#8fa0a8;white-space:nowrap}
 .rt b{margin-left:auto;color:var(--tx);font-size:14px}
 #side{position:fixed;right:calc(env(safe-area-inset-right,0px) + 8px);top:calc(env(safe-area-inset-top,0px) + 6px);z-index:3;display:flex;gap:6px;align-items:flex-start}
-#mm{width:124px;height:124px;border:1px solid var(--ln);background:#000;display:block;border-radius:4px}
+#mm{position:fixed;right:calc(env(safe-area-inset-right,0px) + 70px);top:calc(env(safe-area-inset-top,0px) + 6px);width:min(46vh,240px);height:min(46vh,240px);border:1px solid var(--am);background:#000;display:none;border-radius:6px;z-index:3;image-rendering:pixelated}#mm.on{display:block}
 #btns{display:flex;flex-direction:column;gap:4px}
 .pb{background:#172027;border:1px solid var(--ln);border-radius:8px;min-height:36px;min-width:46px;padding:2px 8px;color:var(--tx);font:600 14px 'Barlow Condensed',sans-serif;letter-spacing:.08em}
 .pb.on{border-color:var(--am);color:var(--am)}.pb:active{background:#22313a}
@@ -53,6 +53,8 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 .pb.sm{min-height:30px;padding:2px 8px;font-size:13px}
 .armw{max-width:820px!important;text-align:left!important;padding:8px 10px!important}
 .armh{display:flex;align-items:center;gap:10px}.armh h2{flex:1}
+.armw>.armh:first-child{position:sticky;top:-8px;z-index:5;background:#11181d;padding:6px 0;margin-top:-6px;border-bottom:1px solid var(--ln)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.chips .pb{min-height:32px;font-size:13px}
 .armeq{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
 .gc{background:#172027;border:1px solid var(--ln);border-left-width:4px;border-radius:8px;padding:5px 8px;font-size:13px;color:#aebbc2;line-height:1.25}
 .gc b{font-size:16px;display:block;letter-spacing:.03em}.gc.sel,.it.sel{outline:2px solid var(--am);background:#1f2c34}
@@ -84,8 +86,8 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
   <div class="rt">⇲<b id="distT">0m</b></div><div class="rt">⧗<b id="timeT">0:00</b></div><div class="rt">◆<b id="threatT">1.0</b></div>
  </div>
 </div>
-<div id="side"><canvas id="mm" width="124" height="124"></canvas>
- <div id="btns"><button class="pb" id="bShop">⌂ BASE</button><button class="pb" id="bBuild" style="display:none">▦ BUILD</button><button class="pb" id="bArm">⚔ ARMS</button><button class="pb on" id="bAuto">AUTO</button><button class="pb" id="bZoom">ZOOM</button><button class="pb" id="bGfx">HIGH</button><button class="pb" id="bFs">⛶</button><button class="pb" id="bPause">❚❚</button></div>
+<canvas id="mm" width="124" height="124"></canvas><div id="side">
+ <div id="btns"><button class="pb" id="bShop">⌂ BASE</button><button class="pb" id="bBuild" style="display:none">▦ BUILD</button><button class="pb" id="bArm">⚔ ARMS</button><button class="pb" id="bMap">◫ MAP</button><button class="pb on" id="bAuto">AUTO</button><button class="pb" id="bZoom">ZOOM</button><button class="pb" id="bGfx">HIGH</button><button class="pb" id="bFs">⛶</button><button class="pb" id="bPause">❚❚</button></div>
 </div>
 <div id="hint"><span>MOVE · PUSH INTO ROCK TO DIG</span><span>AIM · FIRE + DRILL</span></div>
 <div id="toast"></div>
@@ -94,7 +96,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
  <h1>HIVE<span>BREAKER</span></h1>
  <p>You wake in a 4×4 pocket. Everything else is rock, and the dark hides an endless world of alien hives.</p>
  <p><b style="color:var(--am)">Dig</b> by pushing into rock or aiming at it. Every block shows its health, and rock gets tougher the farther you go and the longer you survive. Ore fills your cargo hold: <b style="color:var(--cy)">recall to base</b> (⌂ BASE) to store it, smelt it into bars and forge rig upgrades. Gold <b style="color:#ffd23a">relic</b> blocks give one free.</p>
- <p><b style="color:var(--rd)">Hives</b> are buried in the rock. Kills drop <b style="color:var(--am)">guns and attachments</b> that get better the deeper you go. Every hive is wrapped in a shell of tougher blocks that tells you its strength: purple chitin, amber resin, red flesh, then black carapace. Listen for it festering behind the rock. Queens, brutes and hives drop <b style="color:#2ff5c8">Unique</b> guns. Fuse and merge them in the ⚔ ARMS screen. A hive you destroy grows back once it's out of sight, and it sends raids that tunnel after you.</p>
+ <p><b style="color:var(--rd)">Hives</b> are buried in the rock. Kills drop <b style="color:var(--am)">guns and attachments</b> that get better the deeper you go. Every hive is wrapped in a shell of glowing, pulsing blocks that tells you its strength: purple chitin, amber resin, red flesh, then black carapace. Listen for it festering behind the rock. Queens, brutes and hives drop <b style="color:#2ff5c8">Unique</b> guns. Fuse and merge them in the ⚔ ARMS screen. A hive you destroy grows back once it's out of sight, and it sends raids that tunnel after you.</p>
  <p style="font-size:14px;color:#6f8088">Touch: left side moves, right side aims · Keys: WASD, mouse aims, click fires</p>
  <div id="best" style="font-size:15px;color:#8fa0a8"></div>
  <button class="go" id="bCont" style="display:none">CONTINUE</button><br><button class="go" id="bStart">START RUN</button>
@@ -268,7 +270,7 @@ const reqTxt=r=>`Requires ${muBy(r[0]).n} LV ${r[1]}`;
 // Base tree: crusher, overclock, beacon, expansion and building marks hang off rig upgrades / each other
 const hasB=t=>Object.values(G.base.b).some(b=>b.t===t);
 const needB=(t,txt)=>hasB(t)?null:'Requires '+(/^[AEIOU]/.test(txt)?'an ':'a ')+txt;
-const BREQ={gemcut:()=>needB('washer','Washer')||needB('mill','Steel Mill'),centri:()=>needB('asm','Assembler'),rodfab:()=>needB('centri','Centrifuge'),reactor:()=>needB('rodfab','Rod Fabricator'),wvault:()=>needB('rodfab','Rod Fabricator'),
+const BREQ={gemcut:()=>needB('washer','Washer')||needB('mill','Steel Mill'),centri:()=>needB('asm','Assembler'),rodfab:()=>needB('centri','Centrifuge'),reactor:()=>needB('rodfab','Rod Fabricator'),wvault:()=>needB('reactor','Reactor'),
  battery:()=>needB('esmelt','Electric Smelter'),arcf:()=>needB('reactor','Reactor'),plasma:()=>needB('reactor','Reactor')||needB('centri','Centrifuge'),washer:()=>needB('crusher','Crusher'),tank:()=>needB('washer','Washer'),mill:()=>needB('gen','Coal Generator')||(Object.values(G.base.b).some(b=>b.t==='smelter'&&b.lv>=2)?null:'Requires a Furnace MK2'),
  esmelt:()=>needB('washer','Washer')||needB('mill','Steel Mill'),asm:()=>needB('esmelt','Electric Smelter'),incin:()=>needB('gen','Coal Generator'),gen:()=>muBy('pow').lvl>=2?null:'Requires Drill Power LV 2',crusher:()=>muBy('pow').lvl>=3?null:'Requires Drill Power LV 3',oc:()=>muBy('cargo').lvl>=2?null:'Requires Cargo Pod LV 2',beacon:()=>muBy('scan').lvl>=1?null:'Requires Scanner LV 1',
  expand:()=>(G.base.oc||0)>=2?null:'Requires Overclock LV 2',mk:b=>b.lv>=4&&(G.base.oc||0)<3?'Requires Overclock LV 3':b.lv>=2&&(G.base.oc||0)<1?'Requires Overclock LV 1':null};
@@ -298,7 +300,7 @@ const ET={
 function threat(x,y){return(1+Math.hypot(x,y)/28)*(1+G.t/500)*(1+.4*(G.pl||0))}
 
 /* ---------------- BOOT / SCENE ---------------- */
-let blockM,fogM,floorM,oreM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
+let SHELL_EM=[],blockM,fogM,floorM,oreM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
 const MAXI=6000;const buf={ore:[...Array(14).keys()].map(()=>new Float32Array(3000*16)),oreC:[...Array(14).keys()].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
 class Pool{constructor(src){this.src=src;this.free=[];this.n=0}get(){let m=this.free.pop();if(!m)m=this.src.createInstance('i'+(this.n++));m.setEnabled(true);return m}put(m){m.setEnabled(false);this.free.push(m)}}
 function dyn(name,size,draw){const t=new B.DynamicTexture(name,{width:size,height:size},scene,true);const ctx=t.getContext();draw(ctx,size);t.update();return t}
@@ -309,7 +311,7 @@ function shellTextures(i,base,vein){const S=64,P=4,N=16,mk=n=>new B.DynamicTextu
  const V=new Set();for(let k=0;k<3+i;k++){let x=(Math.random()*N)|0,y=(Math.random()*N)|0;for(let j=0;j<10;j++){V.add(x+','+y);if(Math.random()<.5)x=(x+(Math.random()<.5?1:N-1))%N;else y=(y+(Math.random()<.5?1:N-1))%N}}
  const rgb=(a,m)=>`rgb(${clamp(a[0]*m*255,0,255)|0},${clamp(a[1]*m*255,0,255)|0},${clamp(a[2]*m*255,0,255)|0})`;ge.fillStyle='#000';ge.fillRect(0,0,S,S);
  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const plate=((x>>2)+(y>>2)+(i===0?(y>>2):0))%2,seam=(x%4===0)||(y%4===0);let m=(.8+Math.random()*.25)*(plate?1:.88)*(seam&&i!==2?.72:1);
-  if(V.has(x+','+y)){gd.fillStyle=rgb(vein,.85+Math.random()*.2);ge.fillStyle=rgb(vein,.6)}else if(Math.random()<.06){gd.fillStyle=rgb(base,.4);ge.fillStyle='#000'}else{gd.fillStyle=rgb(base,m);ge.fillStyle='#000'}
+  if(V.has(x+','+y)){gd.fillStyle=rgb(vein,.85+Math.random()*.2);ge.fillStyle=rgb(vein,1.15)}else if(Math.random()<.06){gd.fillStyle=rgb(base,.4);ge.fillStyle='#000'}else{gd.fillStyle=rgb(base,m);ge.fillStyle=rgb(vein,.22*m)}
   gd.fillRect(x*P,y*P,P,P);ge.fillRect(x*P,y*P,P,P)}
  d.update(false);e.update(false);return{d,e}}
 function oreTextures(i,c,hi){const S=64,P=4,N=16,mk=n=>new B.DynamicTexture(n,{width:S,height:S},scene,false,B.Texture.NEAREST_SAMPLINGMODE),d=mk('oreD'+i),e=mk('oreE'+i),gd=d.getContext(),ge=e.getContext();
@@ -348,7 +350,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  fogM=B.MeshBuilder.CreateBox('fog',{size:1},scene);fogM.material=mats.fog;
  floorM=B.MeshBuilder.CreateGround('flr',{width:1,height:1},scene);floorM.material=mats.flr;
  oreM=ORE_TEX.map((c,i)=>{const t=oreTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+i,{size:1},scene),mt=stdMat('orem'+i,[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;return m});
- SHELL_TEX.forEach((c,i)=>{const t=shellTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('shell'+i,{size:1},scene),mt=stdMat('shellm'+i,[1,1,1],null,.6);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
+ SHELL_TEX.forEach((c,i)=>{const t=shellTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('shell'+i,{size:1},scene),mt=stdMat('shellm'+i,[1,1,1],null,.6);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;SHELL_EM.push(t.e);m.material=mt;m.receiveShadows=true;oreM.push(m)});
  {const ob=B.MeshBuilder.CreateBox('obsid',{size:1},scene),om=stdMat('obsm',[.12,.1,.17],null,.5);om.diffuseTexture=rockT;ob.material=om;ob.receiveShadows=true;oreM.push(ob)}
  NEW_ORE_TEX.forEach((c,i)=>{const t=oreTextures(10+i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+(10+i),{size:1},scene),mt=stdMat('orem'+(10+i),[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
  for(const m of [blockM,fogM,floorM,...oreM]){m.alwaysSelectAsActiveMesh=true;m.doNotSyncBoundingInfo=true;m.isPickable=false}
@@ -367,7 +369,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  setupInput();setupUI();applyGfx();
  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();if(G.state==='play')pause();toast('GRAPHICS PAUSED · RESTORING')});
  cv.addEventListener('webglcontextrestored',()=>{try{engine.resize();scene.resetCachedMaterial();toast('GRAPHICS RESTORED')}catch(e){console.warn('WebGL restore',e)}});
- scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);}updateCamera(dt);updateLabels()});
+ scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);{const pu=1.25+Math.sin(performance.now()/420)*.45;for(const t of SHELL_EM)t.level=pu}if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);}updateCamera(dt);updateLabels()});
  engine.runRenderLoop(()=>scene.render());
  addEventListener('resize',()=>engine.resize());
  resetState();G.state='title';showBest();placeCamera();rebuild();
@@ -721,7 +723,7 @@ function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(d
  if(G.recall>0){G.recall-=dt;$('recallBar').firstChild.style.width=((1-G.recall/(G.recallMax||3))*100)+'%';if(Math.random()<.3)burst(P.x+(Math.random()-.5),.2,P.y+(Math.random()-.5),3,[.4,.9,1],[.2,.5,1],2);if(G.recall<=0)goBase()}
  if(atBase){if(padRing)padRing.rotation.y+=dt*1.5;const n=nearMachine();if((n&&n.id)!==(nearM&&nearM.id)||(n&&nearM&&n.n!==nearM.n)){nearM=n;const a=$('actBtn');a.style.display=n?'block':'none';if(n)a.textContent=n.n}}else if(nearM){nearM=null;$('actBtn').style.display='none'}
  G.rebuildCD-=dt;if(G.blockDirty&&G.rebuildCD<=0){rebuild();G.rebuildCD=.1}
- G.mmT-=dt;if(G.mmT<=0){drawMinimap();G.mmT=.35}
+ G.mmT-=dt;if(G.mmT<=0&&$('mm').classList.contains('on')){drawMinimap();G.mmT=.35}
  G.saveT=(G.saveT||0)-dt;if(G.saveT<=0){G.saveT=15;saveGame()}
  G.hudT-=dt;if(G.hudT<=0){hud();G.hudT=.15;if(G.t%2<.16)G.blockDirty=true}
  if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').style.opacity=0}
@@ -843,7 +845,7 @@ function updateBaseVis(dt){updateItemsVis(dt);for(const m of bInst){if(m.tag==='
  if(G.placing){const t=placeTarget(),ok=t&&placeValid(t[0],t[1]);GHOST.setEnabled(!!t);if(t){GHOST.position.set(t[0]+.5,.05,t[1]+.5);GHOST.material.emissiveColor.set(ok?.2:1,ok?1:.2,ok?.4:.2)}$('bPlaceOk').disabled=!ok||!hasC(BT[G.placing].cost)}}
 /* ---- Abyssal ore block models (assets/ores/glb): visuals only, no resource or mining logic ---- */
 // world blocks: draw group index -> model; base products: item -> model
-const ORE_GLB={world:{0:'copper',1:'iron',2:'diamond',3:'gold',4:'core',5:'hive_chitin',9:'obsidian',10:'coal',11:'silicon',12:'rare',13:'uranium'},items:{bcu:'plate',bfe:'iron_plate',bau:'gold_bar',bdi:'cut_diamond',bco:'core_ingot',bst:'steel',bsw:'silicon_wafer',bci:'circuit',slag:'slag',ash:'ash',sludge:'sludge',brd:'rod',bcl:'cell',dur:'depleted_uranium',nw:'nuclear_waste'}};
+const ORE_GLB={world:{0:'copper',1:'iron',2:'diamond',3:'gold',4:'core',9:'obsidian',10:'coal',11:'silicon',12:'rare',13:'uranium'},items:{bcu:'plate',bfe:'iron_plate',bau:'gold_bar',bdi:'cut_diamond',bco:'core_ingot',bst:'steel',bsw:'silicon_wafer',bci:'circuit',slag:'slag',ash:'ash',sludge:'sludge',brd:'rod',bcl:'cell',dur:'depleted_uranium',nw:'nuclear_waste'}};
 const GLBM={},flying=[],boxShow=new Map();
 async function loadOreModels(){if(!B.SceneLoader||!B.SceneLoader.ImportMeshAsync||window.__NULL)return;
  const names=[...new Set([...Object.values(ORE_GLB.world),...Object.values(ORE_GLB.items)])];
@@ -965,14 +967,28 @@ function nearMachine(){if(G.where!=='base'||G.placing)return null;let best=null,
  for(const key in G.base.b){const[x,y]=key.split(',').map(Number),d=Math.hypot(x+.5-P.x,y+.5-P.y);if(d<bd-.2){bd=d;const b=G.base.b[key];best={id:'bld:'+key,n:BT[b.t].n+' MK'+b.lv,x,y}}}return best}
 let openMach=null;
 function openMachine(mc){if(!mc||G.state!=='play')return;if(mc.id==='arm'){openArmory();return}openMach=mc.id;G.state='base';renderBase();show('ovBase',true)}
+// Build menu: categories, each laid out as a tech tree (child under the building it needs), unlocked branches first
+const BCAT=[['logi','Logistics',['box']],['power','Power',['gen','battery','reactor','wvault']],['proc','Processing',['crusher','smelter','washer','tank','mill']],['refine','Refining',['esmelt','asm','gemcut','arcf']],['nuke','Nuclear & Rare',['centri','rodfab','plasma']],['waste','Disposal',['incin']]];
+const BPARENT={washer:'crusher',tank:'washer',mill:'gen',esmelt:'mill',asm:'esmelt',incin:'gen',gemcut:'washer',centri:'asm',rodfab:'centri',reactor:'rodfab',wvault:'reactor',battery:'esmelt',arcf:'reactor',plasma:'centri'};
+let buildCat='all';
+function renderBuildMenu(body,btn){const lockOf=t=>BREQ[t]?BREQ[t]():null;
+ const chips=document.createElement('div');chips.className='chips';for(const[id,nm,ts]of[['all','All',[]],...BCAT]){const n=id==='all'?Object.keys(BT).filter(t=>!lockOf(t)).length:ts.filter(t=>!lockOf(t)).length;const c=document.createElement('button');c.className='pb'+(buildCat===id?' on':'');c.textContent=nm+(n?' · '+n:'');c.onclick=()=>{buildCat=id;renderBase()};chips.appendChild(c)}body.appendChild(chips);
+ const cats=BCAT.filter(c=>buildCat==='all'||c[0]===buildCat).map(c=>[c,c[2].filter(t=>!lockOf(t)).length]).sort((a,b)=>(b[1]>0)-(a[1]>0));
+ for(const[[id,nm,ts]]of cats){body.insertAdjacentHTML('beforeend',`<h2 style="margin:10px 0 2px;font-size:18px">${nm}</h2>`);
+  const inCat=new Set(ts),order=list=>list.sort((a,b)=>(!!lockOf(a))-(!!lockOf(b)));
+  const walk=(parent,depth)=>{order(ts.filter(t=>(inCat.has(BPARENT[t])?BPARENT[t]:null)===parent)).forEach(t=>{const lk=lockOf(t),row=document.createElement('div');row.className='row';row.style.marginLeft=(depth*22)+'px';
+    if(depth)row.style.borderLeft='3px solid '+(lk?'#3a4650':'#e3a53a');if(lk)row.style.opacity=.55;const ext=BPARENT[t]&&!inCat.has(BPARENT[t])?`<span style="color:#6f8088"> ↳ after ${BT[BPARENT[t]].n.replace(/^\S+\s/,'')}</span>`:'';
+    row.innerHTML=`<div><b>${depth?'└ ':''}${BT[t].n}</b>${ext}<small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;
+    row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row);walk(t,depth+1)})};
+  walk(null,0)}}
 function closeBase(){show('ovBase',false);openMach=null;nearM=null;G.state='play';hud();saveGame()}
 function resRows(obj,keys,defs){return'<div class="rs">'+keys.filter(k=>obj[k]>0).map(k=>`<div style="border-left-color:${defs[k].c}"><span style="color:${defs[k].c}">${defs[k].n}</span><b>${fmtN(obj[k])}</b></div>`).join('')+'</div>'}
 function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.startsWith('bld:')?openMach.slice(4):null,BB=bk0&&G.base.b[bk0];if(bk0&&!BB){closeBase();return}
  $('bpH').textContent=openMach==='build'?'▦ BUILD':BB?BT[BB.t].n+' MK'+BB.lv:MACH.find(m=>m.id===openMach).n;const sc=body.scrollTop;body.innerHTML='';
  const btn=(t,fn,col,dis)=>{const b=document.createElement('button');b.className='pb';b.textContent=t;if(col)b.style.borderColor=col;b.disabled=!!dis;b.onclick=()=>{fn();renderBase();hud()};return b};
  const rk=Object.keys(RES),bk=BAR_TIER;
- if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Furnace → Storage Box. Crushers need power: put a Coal Generator anywhere on the same chain. Later: Crusher → Washer (+ Settling Tank) → Electric Smelter → Assembler, then Centrifuge → Rod Fabricator → Reactor (+ Waste Vault) and the Plasma Refinery. Furnaces burn coal, or scrap if there is none. Products flow on their own, even while you are in the mine.</p>');
-  for(const t in BT){const lk=BREQ[t]?BREQ[t]():null,row=document.createElement('div');row.className='row';if(lk)row.style.opacity=.55;row.innerHTML=`<div><b>${BT[t].n}</b><small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row)}}
+ if(openMach==='build'){renderBuildMenu(body,btn);body.insertAdjacentHTML('beforeend','<p style="margin-top:12px;color:#6f8088">Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Furnace → Storage Box. Crushers need power: put a Coal Generator anywhere on the same chain. Later: Crusher → Washer (+ Settling Tank) → Electric Smelter → Assembler, then Centrifuge → Rod Fabricator → Reactor (+ Waste Vault) and the Plasma Refinery. Furnaces burn coal, or scrap if there is none. Products flow on their own, even while you are in the mine.</p>');
+}
  if(BB){const[x,y]=bk0.split(',').map(Number),links=N4.map(n=>[x+n[0],y+n[1]]).map(([a,b])=>a===MACH[0].x&&b===MACH[0].y?'Vault':bAt(a,b)?BT[bAt(a,b).t].n.replace(/^\S+\s/,''):null).filter(Boolean);
   body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'&&!NOREC[BB.t]?`<p>Can process: ${tierTxt(BB)}${BB.lv<5&&nextTxt(BB)?` · MK${BB.lv+1} adds ${nextTxt(BB)}`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
   if(!GRIDS)buildGrids();{const g=GRIDS.find(g=>g.includes(bk0));let sup=0,dem=0;for(const k of g||[]){const o=G.base.b[k];if(!o)continue;if(o.t==='gen'&&o._on)sup+=genOut(o);if(o.t==='reactor'&&o._on)sup+=reactOut(o);if(POWER[o.t]&&(o.job||o._want))dem+=POWER[o.t]}
@@ -987,15 +1003,15 @@ function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.starts
   body.insertAdjacentHTML('beforeend','<p style="margin-top:10px">Storage (safe at base)</p>'+resRows(S,rk,RES)+resRows(S,Object.keys(CRU),CRU)+resRows(S,bk,BARS)+resRows(S,Object.keys(WASH),WASH)+resRows(S,Object.keys(PROD),PROD)+resRows(S,Object.keys(BYP),BYP))}
  if(openMach==='forge'){body.insertAdjacentHTML('beforeend',`<p>Forge rig upgrades from scrap and bars. Scrap <b style="color:var(--am)">${fmtN(S.scrap||0)}</b> · ${bk.map(k=>`<span style="color:${BARS[k].c}">${BARS[k].n} ${S[k]||0}</span>`).join(' · ')}</p>`);
   body.insertAdjacentHTML('beforeend','<h2 style="margin-top:6px">RIG UPGRADE TREE</h2>');
-  const walk=(parent,depth)=>{for(const u of MU){const r=TREE[u.id];if((r?r[0]:null)!==parent)continue;const c=forgeCost(u),mx=u.lvl>=u.max,ok=unlocked(u),row=document.createElement('div');row.className='row';
+  const rank=u=>u.lvl>=u.max?2:unlocked(u)?0:1;const walk=(parent,depth)=>{for(const u of MU.filter(u=>((TREE[u.id]||[null])[0])===parent).sort((a,b)=>rank(a)-rank(b))){const r=TREE[u.id];const c=forgeCost(u),mx=u.lvl>=u.max,ok=unlocked(u),row=document.createElement('div');row.className='row';
     row.style.marginLeft=(depth*22)+'px';if(depth)row.style.borderLeft='3px solid '+(ok?'#e3a53a':'#3a4650');if(!ok)row.style.opacity=.55;
     row.innerHTML=`<div><b>${depth?'└ ':''}${u.ic} ${u.n} <span style="color:#6f8088;font-size:14px">LV ${u.lvl}</span></b><small>${u.d}</small><small style="color:${mx?'#6f8088':'#d8503a'}">${mx?'MAX':!ok?'🔒 '+reqTxt(r):costTxt(c)}</small></div>`;
     row.appendChild(btn(mx?'MAX':ok?'FORGE':'LOCKED',()=>{if(mx||!ok||!has(c))return;pay(c);u.lvl++;u.f(u.lvl);burst(P.x,.8,P.y,20,[1,.6,.2],[1,.3,.1],3)},'#e3a53a',mx||!ok||!has(c)));body.appendChild(row);walk(u.id,depth+1)}};
   walk(null,0)}
  if(openMach==='forge'){const BS=G.base;body.insertAdjacentHTML('beforeend','<h2 style="margin-top:12px">BASE UPGRADES</h2>');
   const gRow=(title,desc,lvl,max,cost,fn,lock)=>{const mx=lvl>=max,row=document.createElement('div');row.className='row';if(lock)row.style.opacity=.55;row.innerHTML=`<div><b>${title} <span style="color:#6f8088;font-size:14px">LV ${lvl}</span></b><small>${desc}</small><small>${mx?'MAX':lock?'<span style="color:#d8503a">🔒 '+lock+'</span>':costTxtC(cost)}</small></div>`;row.appendChild(btn(mx?'MAX':lock?'LOCKED':'FORGE',()=>{if(mx||lock||!hasC(cost))return;payC(cost);fn()},'#e3a53a',mx||!!lock||!hasC(cost)));body.appendChild(row)};
-  gRow('⚡ Overclock','All base buildings work 25% faster',BS.oc,5,ocCost(BS.oc),()=>BS.oc++,BREQ.oc());
-  gRow('⌂ Recall Beacon','Recall to base faster ('+(3/(1+.6*BS.beacon)).toFixed(1)+'s now)',BS.beacon,3,beaconCost(BS.beacon),()=>BS.beacon++,BREQ.beacon());
+  const ocRow=()=>gRow('⚡ Overclock','All base buildings work 25% faster',BS.oc,5,ocCost(BS.oc),()=>BS.oc++,BREQ.oc());if(!BREQ.oc())ocRow();
+  gRow('⌂ Recall Beacon','Recall to base faster ('+(3/(1+.6*BS.beacon)).toFixed(1)+'s now)',BS.beacon,3,beaconCost(BS.beacon),()=>BS.beacon++,BREQ.beacon());if(BREQ.oc())ocRow();
   const E=EXPAND[BS.lvl];if(E){const D=baseDims(),lk=BREQ.expand(),okP=G.pl>=E.pl&&!lk,row=document.createElement('div');row.className='row';row.style.borderColor='#5a3d8a';
    row.innerHTML=`<div><b style="color:#b48cff">⬚ BASE EXPANSION ${BS.lvl+1}</b><small>Room grows from ${D.hw*2+1}×${D.hh*2+1} to ${(D.hw+3)*2+1}×${(D.hh+2)*2+1} tiles.</small><small style="color:${okP?'#6fcf6a':'#d8503a'}">Needs Prestige ${E.pl} (you have P${G.pl})${lk?' · 🔒 '+lk:''}</small><small>${costTxtC(E.c)}</small></div>`;
    row.appendChild(btn('EXPAND',()=>{if(!okP||!hasC(E.c))return;payC(E.c);BS.lvl++;setWhere('base');G.blockDirty=true;rebuild();toast('BASE EXPANDED')},'#b48cff',!okP||!hasC(E.c)));body.appendChild(row)}
@@ -1105,13 +1121,13 @@ function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.
  $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
  if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
-function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=startRecall;$('bBuild').onclick=()=>{if(G.state!=='play')return;endPlace();openMach='build';G.state='base';renderBase();show('ovBase',true)};$('bPlaceOk').onclick=confirmPlace;$('bPlaceX').onclick=endPlace;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
+function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=startRecall;$('bMap').onclick=()=>{const m=$('mm');m.classList.toggle('on');$('bMap').classList.toggle('on',m.classList.contains('on'));if(m.classList.contains('on'))drawMinimap()};$('bBuild').onclick=()=>{if(G.state!=='play')return;endPlace();openMach='build';G.state='base';renderBase();show('ovBase',true)};$('bPlaceOk').onclick=confirmPlace;$('bPlaceX').onclick=endPlace;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{const Z=[1.3,1.8,2.4];G.zoom=Z[(Z.findIndex(z=>z>=G.zoom-.01)+1)%Z.length];try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){};G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
  $('bSnd').onclick=()=>{audioInit();setSound(!SND.on)};setSound(SND.on);addEventListener('pointerdown',audioInit,{once:true});$('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
  $('bSaveQ').onclick=()=>{saveGame();show('ovPause',false);G.state='title';showBest();show('ovTitle',true)};
  $('bCont').onclick=()=>{goFull();if(!loadGame())toast('SAVE NOT FOUND')};
- for(const id of['actBtn','bShop','bBuild','bPlaceOk','bPlaceX','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
+ for(const id of['bMap','actBtn','bShop','bBuild','bPlaceOk','bPlaceX','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
 if(window.__NULL)window.__boot=()=>{window.BABYLON=window.BABYLON||require('babylonjs')}; else loadLib(0);
 </script>
 </body></html>
