@@ -255,9 +255,17 @@ function buildProtos(){
   p.push(part('Cylinder',{height:.25,diameterTop:.08,diameterBottom:.16,tessellation:6},[.3,.55,.15],[0,.42,.48],[Math.PI/2,0,0]));
   protos.spitter={b:merge(p,'spitter',vc),e:eyes([[-.1,.48,.36],[.1,.48,.36],[0,.72,-.1]],[.5,1,.2],.08)}}
  // brute: armored hulk
- {const p=[],a=[.3,.26,.24],dk=[.16,.12,.12];p.push(part('Box',{width:.8,height:.55,depth:.85},dk,[0,.42,0]));p.push(part('Box',{width:.9,height:.18,depth:.7},a,[0,.74,-.05],[.15,0,0]));p.push(part('Box',{width:.55,height:.35,depth:.3},a,[0,.45,.5]));
-  for(const s of[-1,1]){p.push(part('Cylinder',{height:.4,diameterTop:0,diameterBottom:.14,tessellation:5},[.8,.7,.55],[s*.24,.75,.55],[Math.PI/2.5,0,s*.5]));p.push(part('Box',{width:.22,height:.42,depth:.3},dk,[s*.5,.22,.2]))}
-  protos.brute={b:merge(p,'brute',vc),e:eyes([[-.13,.52,.66],[.13,.52,.66]],[1,.55,.1],.08)}}
+ {const p=[],a=[.3,.26,.24],dk=[.16,.12,.12];
+  p.push(part('Sphere',{diameter:1,segments:14},dk,[0,.48,-.02],null,[.52,.48,.54]));
+  p.push(part('Sphere',{diameter:1,segments:14},a,[0,.72,-.12],null,[.57,.25,.56]));
+  p.push(part('Sphere',{diameter:1,segments:12},a,[0,.43,.39],null,[.38,.3,.3]));
+  for(const s of[-1,1]){
+   p.push(part('Sphere',{diameter:.42,segments:12},a,[s*.43,.72,-.02],null,[1,1,1]));
+   p.push(part('Cylinder',{height:.42,diameter:.2,tessellation:10},dk,[s*.48,.35,.12],[0,0,s*.08]));
+   p.push(part('Sphere',{diameter:.2,segments:10},[.8,.7,.55],[s*.48,.13,.18],null,[1,1,1]));
+   p.push(part('Cylinder',{height:.34,diameterTop:0,diameterBottom:.13,tessellation:10},[.8,.7,.55],[s*.18,.86,.48],[Math.PI/2.4,0,s*.28]));
+  }
+  protos.brute={b:merge(p,'brute',vc),e:eyes([[-.13,.54,.67],[.13,.54,.67]],[1,.55,.1],.09)}}
  // flyer: wasp
  {const p=[];p.push(part('Sphere',{diameter:1,segments:8},[.35,.3,.08],[0,0,-.15],null,[.26,.22,.5]));p.push(part('Sphere',{diameter:.24,segments:6},[.15,.12,.05],[0,0,.18]));
   for(const s of[-1,1])p.push(part('Box',{width:.7,height:.02,depth:.28},[.55,.6,.7],[s*.4,.08,0],[0,s*.2,0]));
@@ -270,16 +278,54 @@ function buildProtos(){
  for(const k in protos){if(shadowGen){shadowGen.addShadowCaster(protos[k].b)}protos[k].b.isPickable=false;protos[k].e.isPickable=false}
 }
 function eyes(list,col,sz){const p=list.map(q=>{const m=B.MeshBuilder.CreateSphere('e',{diameter:sz*2,segments:4},scene);m.position.set(q[0],q[1],q[2]);return m});const m=B.Mesh.MergeMeshes(p,true,true);m.material=stdMat('em'+col.join(),[0,0,0],col);m.position.y=-60;return m}
-function buildPlayer(){const p=[],dk=[.13,.14,.16],gr=[.36,.4,.44],am=[.89,.65,.23];
- for(const s of[-1,1]){p.push(part('Box',{width:.2,height:.22,depth:.66},dk,[s*.24,.12,0]));for(let k=0;k<4;k++)p.push(part('Box',{width:.22,height:.05,depth:.06},[.25,.25,.27],[s*.24,.235,-.25+k*.17]))}
- p.push(part('Box',{width:.4,height:.24,depth:.5},gr,[0,.33,0]));p.push(part('Box',{width:.42,height:.05,depth:.52},am,[0,.47,0]));
- p.push(part('Cylinder',{height:.22,diameter:.36,tessellation:10},[.28,.31,.35],[0,.6,-.02]));
- p.push(part('Box',{width:.1,height:.1,depth:.5},dk,[.16,.58,.26]));p.push(part('Cylinder',{height:.12,diameter:.13,tessellation:8},[.5,.52,.56],[.16,.58,.52],[Math.PI/2,0,0]));
- p.push(part('Box',{width:.06,height:.16,depth:.06},am,[-.12,.78,-.1]));
- player=B.Mesh.MergeMeshes(p,true,true);player.material=mats.vc;
- visor=B.MeshBuilder.CreateBox('visor',{width:.26,height:.06,depth:.05},scene);visor.position.set(0,.63,.17);visor.material=stdMat('vis',[0,0,0],[.31,.82,.85]);visor.parent=player;
- const tip=B.MeshBuilder.CreateSphere('tip',{diameter:.07,segments:4},scene);tip.position.set(-.12,.88,-.1);tip.material=stdMat('tipm',[0,0,0],[1,.3,.2]);tip.parent=player;
- if(shadowGen)shadowGen.addShadowCaster(player,true)}
+function buildPlayer(){
+ // Rounded humanoid mining exosuit: no tank chassis, tracks, or block-built silhouette.
+ player=new B.TransformNode('miner-exosuit',scene);
+ const armor=stdMat('suit-armor',[.16,.2,.24],null,.72),dark=stdMat('suit-joints',[.035,.05,.065],null,.35),
+       trim=stdMat('suit-trim',[.62,.39,.13],[.12,.055,.012],.5),
+       cyan=stdMat('suit-visor',[.015,.12,.15],[.08,.78,.9],.85),
+       pale=stdMat('suit-ceramic',[.42,.48,.51],null,.65);
+ const add=(kind,name,opt,pos,rot,scale,mat)=>{
+  const m=B.MeshBuilder['Create'+kind](name,opt,scene);
+  m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);
+  if(scale)m.scaling.set(scale[0],scale[1],scale[2]);m.material=mat;m.parent=player;m.isPickable=false;
+  if(shadowGen)shadowGen.addShadowCaster(m);return m};
+ // compact armored boots and articulated legs
+ for(const s of[-1,1]){
+  add('Sphere','boot',{diameter:1,segments:12},[s*.19,.13,.12],null,[.19,.14,.31],dark);
+  add('Cylinder','shin',{height:.34,diameter:.2,tessellation:12},[s*.19,.34,-.015],[0,0,s*.035],[1,1,1],armor);
+  add('Sphere','knee',{diameter:.23,segments:12},[s*.19,.51,.035],null,[1,1,.9],trim);
+  add('Cylinder','thigh',{height:.3,diameter:.23,tessellation:12},[s*.19,.68,-.015],[0,0,-s*.04],[1,1,1],pale);
+  add('Sphere','hip-guard',{diameter:.27,segments:12},[s*.2,.79,0],null,[.95,.75,.8],armor);
+ }
+ add('Sphere','pelvis',{diameter:.48,segments:16},[0,.79,-.015],null,[.85,.55,.72],dark);
+ // tapered torso, chest plate and compact reactor
+ add('Sphere','torso-core',{diameter:1,segments:16},[0,1.08,0],null,[.39,.47,.29],armor);
+ add('Sphere','chest-plate',{diameter:1,segments:16},[0,1.15,.115],null,[.34,.28,.2],pale);
+ add('Sphere','reactor-ring',{diameter:.23,segments:16},[0,1.12,.29],null,[1,1,.35],trim);
+ add('Sphere','reactor-light',{diameter:.12,segments:12},[0,1.12,.355],null,[1,1,.45],cyan);
+ add('Sphere','backpack',{diameter:.48,segments:12},[0,1.15,-.28],null,[.72,1,.58],dark);
+ for(const s of[-1,1]){
+  add('Sphere','shoulder-shell',{diameter:.34,segments:12},[s*.47,1.31,0],null,[1,.9,.95],pale);
+  add('Cylinder','upper-arm',{height:.34,diameter:.17,tessellation:12},[s*.53,1.08,.015],[0,0,-s*.12],[1,1,1],armor);
+  add('Sphere','elbow-joint',{diameter:.19,segments:12},[s*.57,.91,.05],null,[1,1,1],dark);
+  add('Cylinder','forearm',{height:.36,diameter:.19,tessellation:12},[s*.59,.76,.12],[0,0,s*.08],[1,1,1],pale);
+  add('Sphere','glove',{diameter:.2,segments:12},[s*.6,.57,.16],null,[1,.8,1],dark);
+ }
+ // left arm carries a compact automatic cutter; right arm carries the powered drill
+ add('Cylinder','gun-housing',{height:.34,diameter:.13,tessellation:12},[-.61,.56,.31],[Math.PI/2,0,0],[1,1,1],dark);
+ add('Cylinder','gun-muzzle',{height:.18,diameter:.07,tessellation:12},[-.61,.56,.54],[Math.PI/2,0,0],[1,1,1],trim);
+ add('Cylinder','drill-mount',{height:.23,diameter:.18,tessellation:12},[.61,.55,.27],[Math.PI/2,0,0],[1,1,1],trim);
+ add('Cylinder','drill-body',{height:.38,diameter:.14,tessellation:12},[.61,.55,.55],[Math.PI/2,0,0],[1,1,1],armor);
+ add('Cylinder','drill-bit',{height:.25,diameterTop:0,diameterBottom:.13,tessellation:12},[.61,.55,.86],[Math.PI/2,0,0],[1,1,1],pale);
+ add('Torus','drill-energy-ring',{diameter:.2,thickness:.025,tessellation:16},[.61,.55,.73],[Math.PI/2,0,0],[1,1,1],cyan);
+ // domed helmet with a broad curved luminous faceplate
+ add('Sphere','helmet',{diameter:1,segments:18},[0,1.58,.015],null,[.29,.31,.29],armor);
+ add('Sphere','helmet-crown',{diameter:.34,segments:14},[0,1.78,-.015],null,[1,.42,.85],trim);
+ visor=add('Sphere','visor',{diameter:1,segments:16},[0,1.61,.235],null,[.235,.105,.075],cyan);
+ add('Sphere','helmet-side-left',{diameter:.13,segments:10},[-.285,1.58,.02],null,[1,1,1],trim);
+ add('Sphere','helmet-side-right',{diameter:.13,segments:10},[.285,1.58,.02],null,[1,1,1],trim);
+}
 function buildHive(){const s=B.MeshBuilder.CreateSphere('hv',{diameter:1.6,segments:16},scene);const pos=s.getVerticesData(B.VertexBuffer.PositionKind);for(let i=0;i<pos.length;i+=3){const x=pos[i],y=pos[i+1],z=pos[i+2],n=1+.22*Math.sin(x*7+y*5)*Math.cos(z*6-y*3);pos[i]*=n;pos[i+1]*=n*.8;pos[i+2]*=n}s.updateVerticesData(B.VertexBuffer.PositionKind,pos);s.position.y=.45;
  const parts=[colored(s,[.3,.05,.22])];for(let k=0;k<7;k++){const a=k/7*Math.PI*2;parts.push(part('Cylinder',{height:1,diameterTop:0,diameterBottom:.22,tessellation:6},[.5,.15,.35],[Math.cos(a)*.75,.55,Math.sin(a)*.75],[Math.sin(a)*.7,0,-Math.cos(a)*.7]))}
  parts.push(part('Sphere',{diameter:.5,segments:8},[1,.3,.7],[0,1.05,0]));
