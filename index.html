@@ -135,9 +135,11 @@ function isOpen(x,y){return dug.has(K(x,y))||baseOpen(x,y)}
 function blockHP(x,y){const m=mods.get(K(x,y));return m?Math.ceil(m.h):maxHP(x,y,matAt(x,y))}
 
 /* ---------------- STATE ---------------- */
-const G={state:'title',t:0,vision:7,auto:true,gfx:'high',zoom:1,blockDirty:true,flowT:0,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,rebuildCD:0,hudT:0,mmT:0,hiveT:0,shake:0};
+const G={state:'title',t:0,vision:7,auto:true,gfx:'balanced',zoom:1,blockDirty:true,flowT:0,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,rebuildCD:0,hudT:0,mmT:0,hiveT:0,shake:0};
 const M={dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cd:0,beamT:0,bx:0,by:0};
 let W,P,enemies,bullets,acids,orbs,knownHives,activeHives,drones;
+const enemyPools={};
+function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=p=[];const m=p.pop();if(m){m.b.setEnabled(true);m.e.setEnabled(true);m.bar.setEnabled(true);return m}return{b:protos[type].b.createInstance('e'),e:protos[type].e.createInstance('ee'),bar:barProto.createInstance('eb')}}
 function resetState(){SEED=(rnd()*1e9)|0;matCache.clear();hiveCache=new Map();dug=new Set();mods=new Map();revealed=new Set();
  Object.assign(G,{t:0,vision:7,blockDirty:true,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,shake:0});
  Object.assign(M,{dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cd:0,beamT:0});
@@ -232,6 +234,8 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  const dot=dyn('dot',32,(g,S)=>{const q=g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);q.addColorStop(0,'rgba(255,255,255,1)');q.addColorStop(.4,'rgba(255,255,255,.6)');q.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=q;g.fillRect(0,0,S,S)});dot.hasAlpha=true;
  for(let i=0;i<8;i++){const ps=new B.ParticleSystem('ps'+i,160,scene);ps.particleTexture=dot;ps.emitter=new B.Vector3(0,-50,0);ps.minEmitBox=new B.Vector3(-.15,0,-.15);ps.maxEmitBox=new B.Vector3(.15,.2,.15);ps.emitRate=0;ps.manualEmitCount=0;ps.blendMode=B.ParticleSystem.BLENDMODE_ADD;ps.gravity=new B.Vector3(0,-14,0);ps.direction1=new B.Vector3(-1,1.5,-1);ps.direction2=new B.Vector3(1,3.5,1);ps.minEmitPower=1;ps.maxEmitPower=3;ps.minLifeTime=.2;ps.maxLifeTime=.55;ps.minSize=.06;ps.maxSize=.18;ps.updateSpeed=.016;ps.colorDead=new B.Color4(0,0,0,0);ps.start();PS.push(ps)}
  setupInput();setupUI();applyGfx();
+ cv.addEventListener('webglcontextlost',e=>{e.preventDefault();if(G.state==='play')pause();toast('GRAPHICS PAUSED · RESTORING')});
+ cv.addEventListener('webglcontextrestored',()=>{try{engine.resize();scene.resetCachedMaterial();toast('GRAPHICS RESTORED')}catch(e){console.warn('WebGL restore',e)}});
  scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);if(G.state==='play')update(dt);updateCamera(dt);updateLabels()});
  engine.runRenderLoop(()=>scene.render());
  addEventListener('resize',()=>engine.resize());
@@ -346,7 +350,7 @@ function setupInput(){const tz=$('touch'),kM=$('kMove'),kA=$('kAim');
  addEventListener('keydown',e=>{IN.keys[e.key.toLowerCase()]=true;if(e.key===' ')IN.keys.space=true;if(e.key==='Escape'&&G.state==='play')pause()});
  addEventListener('keyup',e=>{IN.keys[e.key.toLowerCase()]=false;if(e.key===' ')IN.keys.space=false});
  addEventListener('wheel',e=>{G.zoom=clamp(G.zoom+(e.deltaY>0?.1:-.1),.7,1.5);G.blockDirty=true},{passive:true});
- document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.state==='play')pause()})}
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause()}else if(engine&&!window.__NULL){engine.resize()}})}
 function mouseGround(){const r=scene.createPickingRay(IN.mouse.x*(engine.getRenderWidth()/innerWidth),IN.mouse.y*(engine.getRenderHeight()/innerHeight),B.Matrix.Identity(),camera);if(Math.abs(r.direction.y)<1e-4)return null;const t=-(r.origin.y-.5)/r.direction.y;return[r.origin.x+r.direction.x*t,r.origin.z+r.direction.z*t]}
 
 /* ---------------- FX ---------------- */
@@ -388,9 +392,10 @@ function hurtPlayer(d){if(P.inv>0)return;P.hp-=d;P.hurtT=0;P.inv=.25;G.shake=Mat
 function newSquad(h,raid){return{h,members:[],state:raid?'hunt':'muster',side:rnd()<.5?-1:1,raid:!!raid,size:3+h.tier}}
 function spawnEnemy(type,h,sq,x,y){if(enemies.length>=70)return null;const d=ET[type],th=threat(x,y)*(1+(h?h.tier-1:0)*.25),lv=Math.floor(th*2);
  const e={type,x,y,r:d.r,hp:d.hp*th,max:d.hp*th,spd:d.spd*(1+Math.min(.5,(th-1)*.06)),dmg:d.dmg*(1+(th-1)*.45),lv,hive:h,sq,cd:rnd(),digT:0,flash:0,vx:0,vy:0,ph:rnd()*6,ret:false,retDone:false,role:rnd()<.45?'flank':'main',sumT:5,dead:false};
- e.b=protos[type].b.createInstance('e');e.e=protos[type].e.createInstance('ee');e.bar=barProto.createInstance('eb');if(type==='queen'){e.b.scaling.setAll(1);}
+ const parts=acquireEnemyMeshes(type);e.b=parts.b;e.e=parts.e;e.bar=parts.bar;e.b.isVisible=e.e.isVisible=e.bar.isVisible=true;
+ if(type==='queen')e.b.scaling.setAll(1);
  if(sq)sq.members.push(e);if(h)h.count++;enemies.push(e);return e}
-function disposeEnemy(e){e.b.dispose();e.e.dispose();e.bar.dispose()}
+function disposeEnemy(e){if(!e||!e.b)return;e.b.setEnabled(false);e.e.setEnabled(false);e.bar.setEnabled(false);let p=enemyPools[e.type];if(!p)enemyPools[e.type]=p=[];if(p.length<70)p.push({b:e.b,e:e.e,bar:e.bar});else{e.b.dispose();e.e.dispose();e.bar.dispose()}e.b=e.e=e.bar=null}
 function squadComp(h,i){const t=h.tier,d=h.d;const pool=['stalker','stalker','spitter'];if(t>=2||d>45)pool.push('brute');if(d>40)pool.push('flyer','flyer');if(t>=2)pool.push('spitter');if(i===0&&t>=4&&rnd()<.35)return'queen';if(i===0&&t>=2&&rnd()<.4)return'brute';return pool[(rnd()*pool.length)|0]}
 function hiveSpawnPoint(h){for(let k=0;k<8;k++){const a=rnd()*6.28,r=rnd()*(h.r-.6);const x=h.x+.5+Math.cos(a)*r,y=h.y+.5+Math.sin(a)*r;if(isOpen(Math.floor(x),Math.floor(y)))return[x,y]}return[h.x+.5,h.y+.5]}
 function launchRaid(h){const n=Math.min(10,2+h.tier+Math.floor(G.t/240));const sq=newSquad(h,true);for(let i=0;i<n;i++){const p=hiveSpawnPoint(h);spawnEnemy(squadComp(h,i),h,sq,p[0],p[1])}
@@ -425,8 +430,11 @@ function updateEnemies(dt){
   const ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml}
   e.vx+=(mx*e.spd-e.vx)*Math.min(1,dt*8);e.vy+=(my*e.spd-e.vy)*Math.min(1,dt*8);
   if(D.fly){e.x+=e.vx*dt;e.y+=e.vy*dt}else{const hit=moveBody(e,e.vx*dt,e.vy*dt);if(hit&&(dig||e.type==='brute')&&sq&&sq.state==='hunt'){e.digT-=dt;if(e.digT<=0){e.digT=.45;damageBlock(hit.x,hit.y,D.dig*threat(e.x,e.y)*1.4,'enemy');burst(hit.x+.5,.5,hit.y+.5,3,[.7,.6,.5],[.4,.3,.2],1.5)}}}}
- // separation
- for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.dead)continue;for(let j=i+1;j<enemies.length;j++){const b=enemies[j];if(b.dead)continue;const dx=b.x-a.x,dy=b.y-a.y,r=a.r+b.r,dd=dx*dx+dy*dy;if(dd<r*r&&dd>1e-6){const d=Math.sqrt(dd),p=(r-d)*.5,nx=dx/d,ny=dy/d;if(!ET[a.type].fly)moveBody(a,-nx*p,-ny*p);if(!ET[b.type].fly)moveBody(b,nx*p,ny*p)}}}
+ // Spatial buckets limit separation checks to nearby enemies; AI and movement rules are unchanged.
+ const sepSize=2.4,sepGrid=new Map();
+ for(let i=0;i<enemies.length;i++){const e=enemies[i];if(e.dead)continue;const gx=Math.floor(e.x/sepSize),gy=Math.floor(e.y/sepSize),key=gx+','+gy;let cell=sepGrid.get(key);if(!cell)sepGrid.set(key,cell=[]);cell.push({e,i})}
+ for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.dead)continue;const gx=Math.floor(a.x/sepSize),gy=Math.floor(a.y/sepSize);
+  for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const cell=sepGrid.get((gx+ox)+','+(gy+oy));if(!cell)continue;for(const item of cell){if(item.i<=i)continue;const b=item.e;if(b.dead)continue;const dx=b.x-a.x,dy=b.y-a.y,r=a.r+b.r,dd=dx*dx+dy*dy;if(dd<r*r&&dd>1e-6){const d=Math.sqrt(dd),p=(r-d)*.5,nx=dx/d,ny=dy/d;if(!ET[a.type].fly)moveBody(a,-nx*p,-ny*p);if(!ET[b.type].fly)moveBody(b,nx*p,ny*p)}}}}
  // cleanup + visuals
  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];if(e.dead||Math.hypot(e.x-P.x,e.y-P.y)>110){if(e.sq){const k=e.sq.members.indexOf(e);if(k>=0)e.sq.members.splice(k,1)}if(!e.dead&&e.hive)e.hive.count=Math.max(0,e.hive.count-1);disposeEnemy(e);enemies.splice(i,1);continue}
   const vis=revealed.has(K(Math.floor(e.x),Math.floor(e.y)))&&e.x>win.x0-1&&e.x<win.x1+1&&e.y>win.y0-1&&e.y<win.y1+1;
@@ -531,10 +539,13 @@ function die(){G.state='dead';burst(P.x,.6,P.y,60,[.3,.9,1],[1,.5,.2],5);let bes
 function showBest(){let b=null;try{b=JSON.parse(localStorage.getItem('hivebreaker_best')||'null')}catch(e){}$('best').textContent=b?`BEST · ${b.dist}m · ${b.kills} kills · ${b.hives} hives · ${fmtT(b.time)}`:''}
 function startRun(){resetState();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
 function goFull(){try{const el=document.documentElement;const p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen&&el.webkitRequestFullscreen();if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}}
-function applyGfx(){const hi=G.gfx==='high';$('bGfx').textContent=hi?'HIGH':'LOW';if(glow)glow.isEnabled=hi;if(shadowGen){dirLight.shadowEnabled=hi}engine.setHardwareScalingLevel(hi?1/Math.min(1.5,window.devicePixelRatio||1):1)}
+function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.devicePixelRatio||1):mode==='balanced'?1.15:1;
+ $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
+ if(glow)glow.isEnabled=mode==='quality';if(shadowGen)dirLight.shadowEnabled=mode==='quality';
+ engine.setHardwareScalingLevel(1/scale)}
 function setupUI(){$('bStart').onclick=()=>{goFull();startRun()};$('bAgain').onclick=()=>startRun();$('bShop').onclick=openShop;$('bShopX').onclick=()=>{show('ovShop',false);G.state='play';hud()};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{G.zoom=G.zoom>=1.4?.75:+(G.zoom+.325).toFixed(3);G.blockDirty=true;if(G.state!=='play')rebuild()};
- $('bGfx').onclick=()=>{G.gfx=G.gfx==='high'?'low':'high';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
+ $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
  $('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
  for(const id of['bShop','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
 if(window.__NULL)window.__boot=()=>{window.BABYLON=window.BABYLON||require('babylonjs')}; else loadLib(0);
