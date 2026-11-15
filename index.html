@@ -155,8 +155,8 @@ const CRU={};for(const r of RAW)CRU['x'+r]={n:'Crushed '+RES[r].n.replace(' Ore'
 const ITEM=Object.assign({},RES,CRU,BARS);
 // Base buildings chain by adjacency: no belts. Storage boxes are ports into base storage.
 const BT={box:{n:'▣ STORAGE BOX',d:'Port into base storage. Neighbours pull ore and crushed ore from it and push finished products into it.',cost:{scrap:60,bcu:4}},
- crusher:{n:'⚙ CRUSHER',d:'Crushes 2 ore into 3 crushed ore. Put a smelter next to it for +50% bars.',cost:{scrap:150,bcu:6,bfe:4}},
- smelter:{n:'♨ SMELTER',d:'Smelts ore or crushed ore into bars. Crushed ore smelts 20% faster.',cost:{scrap:120,bcu:8}}};
+ crusher:{n:'⚙ CRUSHER',d:'Crushes 2 ore into 3 crushed ore. Put a smelter next to it for +50% bars. MK1 handles copper only; each mark adds the next ore.',cost:{scrap:150,bcu:6,bfe:4}},
+ smelter:{n:'♨ SMELTER',d:'Smelts ore or crushed ore into bars. MK1 smelts copper only: upgrade it to unlock iron (MK2), gold (MK3), diamond (MK4) and core (MK5).',cost:{scrap:120,bcu:8}}};
 const EXPAND=[{pl:1,c:{scrap:8000,bfe:40,bau:20}},{pl:2,c:{scrap:32000,bau:60,bdi:30}},{pl:3,c:{scrap:128000,bdi:80,bco:40}},{pl:4,c:{scrap:512000,bco:150,bdi:120}}];
 const hasC=c=>Object.keys(c).every(k=>(G.store[k]||0)>=c[k]);
 function payC(c){for(const k in c)G.store[k]-=c[k]}
@@ -801,19 +801,23 @@ function deploy(){show('ovBase',false);G.state='play';setWhere('mine');P.x=G.min
 function bAt(x,y){return G.base.b[x+','+y]}
 function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
 const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
-function wants(t){return t==='crusher'?RAW:[...RAW.map(r=>'x'+r),...RAW]}
+// Mark gates which ores a building can handle: MK1 copper, MK2 iron, MK3 gold, MK4 diamond, MK5 core.
+const ORE_TIER=['cu','fe','au','di','co'];
+const canDo=(b,r)=>ORE_TIER.indexOf(r)<b.lv;
+function wants(b){const raw=RAW.filter(r=>canDo(b,r));return b.t==='crusher'?raw:[...raw.map(r=>'x'+r),...raw]}
+const tierTxt=b=>ORE_TIER.filter(r=>canDo(b,r)).map(r=>`<span style="color:${RES[r].c}">${RES[r].n.replace(' Ore','').replace('Rough ','')}</span>`).join(', ');
 function flowFx(ax,ay,bx,by,it){if(G.where!=='base')return;const c=B.Color3.FromHexString(ITEM[it].c);burst((ax+bx)/2+.5,.9,(ay+by)/2+.5,5,[c.r,c.g,c.b],[c.r*.6,c.g*.6,c.b*.6],1.2)}
 function smeltTick(dt){const BS=G.base;if(!BS)return;BS.acc=(BS.acc||0)+dt;if(BS.acc<.2)return;const st=BS.acc;BS.acc=0;const S=G.store;
  for(const key in BS.b){const b=BS.b[key];if(b.t==='box')continue;const[x,y]=key.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
   const outN=Object.values(b.out).reduce((a,v)=>a+v,0);
-  if(!b.job&&outN<8){for(const it of wants(b.t)){const r=it[0]==='x'?it.slice(1):it,need=b.t==='crusher'?2:BARS['b'+r].need;let have=b.inv[it]||0;
+  if(!b.job&&outN<8){for(const it of wants(b)){const r=it[0]==='x'?it.slice(1):it,need=b.t==='crusher'?2:BARS['b'+r].need;let have=b.inv[it]||0;
     for(const[nx,ny]of nb){if(have>=need)break;const n=bAt(nx,ny);
      if(isPort(nx,ny)){const tk=Math.min(need-have,S[it]||0);if(tk>0){S[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
      else if(n&&n.t!=='box'&&n.out[it]>0){const tk=Math.min(need-have,n.out[it]);n.out[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
     b.inv[it]=have;if(have>=need){b.inv[it]-=need;b.job=b.t==='crusher'?{out:'x'+r,n:3,t:1.5,T:1.5}:{out:'b'+r,n:1,t:BARS['b'+r].time*(it[0]==='x'?.8:1),T:BARS['b'+r].time*(it[0]==='x'?.8:1)};break}}}
   if(b.job){b.job.t-=st*bSpeed(b);if(b.job.t<=0){b.out[b.job.out]=(b.out[b.job.out]||0)+b.job.n;b.job=null}}
   // push products: keep ones a neighbouring building will pull, send the rest to a port
-  for(const it in b.out){if(!(b.out[it]>0))continue;const used=nb.some(([nx,ny])=>{const n=bAt(nx,ny);return n&&n.t!=='box'&&wants(n.t).includes(it)});
+  for(const it in b.out){if(!(b.out[it]>0))continue;const used=nb.some(([nx,ny])=>{const n=bAt(nx,ny);return n&&n.t!=='box'&&wants(n).includes(it)});
    if(used&&b.out[it]<6)continue;const p=nb.find(([nx,ny])=>isPort(nx,ny));if(p){S[it]=(S[it]||0)+b.out[it];flowFx(x,y,p[0],p[1],it);b.out[it]=0}}}
  if(G.state==='base'&&openMach&&openMach.startsWith('bld:'))renderBase()}
 function nearMachine(){if(G.where!=='base'||G.placing)return null;let best=null,bd=1.9;for(const mc of MACH){const d=Math.hypot(mc.x+.5-P.x,mc.y+.5-P.y);if(d<bd){bd=d;best=mc}}
@@ -829,9 +833,9 @@ function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.starts
  if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Smelter → Storage Box. Products flow on their own, even while you are in the mine.</p>');
   for(const t in BT){const lk=BREQ[t]?BREQ[t]():null,row=document.createElement('div');row.className='row';if(lk)row.style.opacity=.55;row.innerHTML=`<div><b>${BT[t].n}</b><small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row)}}
  if(BB){const[x,y]=bk0.split(',').map(Number),links=N4.map(n=>[x+n[0],y+n[1]]).map(([a,b])=>a===MACH[0].x&&b===MACH[0].y?'Vault':bAt(a,b)?BT[bAt(a,b).t].n.replace(/^\S+\s/,''):null).filter(Boolean);
-  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p><p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
+  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'?`<p>Can process: ${tierTxt(BB)}${BB.lv<5?` · MK${BB.lv+1} adds <span style="color:${RES[ORE_TIER[BB.lv]].c}">${RES[ORE_TIER[BB.lv]].n}</span>`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
   if(BB.t!=='box'){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+ITEM[j.out].n:'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
-  const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
+  const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed${BB.t!=='box'&&BB.lv<5?' · unlocks '+RES[ORE_TIER[BB.lv]].n:''}</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
   row.appendChild(btn(mx?'MAX':lk?'LOCKED':'UPGRADE',()=>{if(mx||lk||!hasC(uc))return;payC(uc);BB.lv++;syncBuildings();openMach='bld:'+bk0},'#e3a53a',mx||!!lk||!hasC(uc)));body.appendChild(row);
   body.appendChild(btn('DEMOLISH · 50% REFUND',()=>{for(const k in BT[BB.t].cost)S[k]=(S[k]||0)+Math.floor(BT[BB.t].cost[k]/2);for(const o of[BB.inv,BB.out])for(const k in o)S[k]=(S[k]||0)+o[k];delete G.base.b[bk0];syncBuildings();closeBase()},'#d8503a'))}
  if(openMach==='store'){const cw=Math.floor(cargoW());
