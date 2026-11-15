@@ -159,23 +159,32 @@ const BARS={bcu:{n:'Copper Plate',from:'cu',need:2,time:2,c:'#e07a3a'},bfe:{n:'I
 const BAR_TIER=['bcu','bfe','bau','bdi','bco'];
 const RAW=['co','di','au','fe','cu'];   // highest value first
 const CRU={};for(const r of RAW)CRU['x'+r]={n:'Crushed '+RES[r].n.replace(' Ore','').replace('Rough ',''),c:RES[r].c,w:1};
-CRU.xsi={n:'Crushed Silicon',c:'#468fe7',w:1};
-const WASH={wau:{n:'Washed Gold',c:'#ffe27a',w:1},wsi:{n:'Washed Silicon',c:'#7ab0ff',w:1}};
-const PROD={bst:{n:'Steel',c:'#c8d2dc'},bsw:{n:'Silicon Wafer',c:'#5a7ad2'},bci:{n:'Circuit',c:'#34c76c'}};
+CRU.xsi={n:'Crushed Silicon',c:'#468fe7',w:1};CRU.xur={n:'Crushed Uranium',c:'#5bda31',w:1};CRU.xra={n:'Crushed Rare',c:'#b46cf0',w:1};
+const WASH={wau:{n:'Washed Gold',c:'#ffe27a',w:1},wsi:{n:'Washed Silicon',c:'#7ab0ff',w:1},wdi:{n:'Washed Diamond',c:'#8af6f8',w:1},wco:{n:'Washed Core',c:'#ff7a5a',w:1},wur:{n:'Washed Uranium',c:'#8aec60',w:1},wra:{n:'Washed Rare',c:'#cc90f6',w:1},
+ eur:{n:'Enriched Uranium',c:'#b4ff5a',w:1},rra:{n:'Refined Rare',c:'#e0a0ff',w:1}};
+const PROD={bst:{n:'Steel',c:'#c8d2dc'},bsw:{n:'Silicon Wafer',c:'#5a7ad2'},bci:{n:'Circuit',c:'#34c76c'},brd:{n:'Fuel Rod',c:'#41da85'},bcl:{n:'Energy Cell',c:'#ebb739'}};
 // byproducts: slag/ash go to storage (useful or burnable); sludge cannot be stored and must reach a Settling Tank
-const BYP={ash:{n:'Ash',c:'#a4a49e',w:1},slag:{n:'Slag',c:'#8a7466',w:1},sludge:{n:'Sludge',c:'#6a8030',w:1,noStore:1},gravel:{n:'Gravel',c:'#9a9488',w:1}};
+const BYP={ash:{n:'Ash',c:'#a4a49e',w:1},slag:{n:'Slag',c:'#8a7466',w:1},sludge:{n:'Sludge',c:'#6a8030',w:1,noStore:1},gravel:{n:'Gravel',c:'#9a9488',w:1},dur:{n:'Depleted Uranium',c:'#58704a',w:1},nw:{n:'Nuclear Waste',c:'#96ec3c',w:1,noStore:1}};
 const ITEM=Object.assign({},RES,CRU,WASH,BARS,PROD,BYP);
 // Base buildings chain by adjacency: no belts. Storage boxes are ports into base storage.
 const BT={box:{n:'▣ STORAGE BOX',d:'Port into base storage. Neighbours pull ore and crushed ore from it and push finished products into it.',cost:{scrap:60,bcu:4}},
- washer:{n:'≋ WASHER',d:'Needs 4 power. Washes 2 crushed gold or silicon into 2 concentrate and 1 sludge. Feed it ash and it makes no sludge. Sludge cannot go to storage: put a Settling Tank next to it or the washer clogs.',cost:{scrap:300,bcu:10,bfe:8}},
+ washer:{n:'≋ WASHER',d:'Needs 4 power. Washes 2 crushed gold, silicon, diamond, core, uranium or rare into 2 concentrate and 1 sludge. Feed it ash and it makes no sludge. Sludge cannot go to storage: put a Settling Tank next to it or the washer clogs.',cost:{scrap:300,bcu:10,bfe:8}},
  tank:{n:'◎ SETTLING TANK',d:'No power. Settles 2 sludge into 3 scrap. Must touch the washer it serves, and a storage box or the Vault to drop its scrap.',cost:{scrap:150,bcu:6}},
  mill:{n:'▲ STEEL MILL',d:'Needs 10 power. 2 iron plate + 1 coal → 1 steel and 1 slag.',cost:{scrap:500,bfe:15,bcu:10}},
  esmelt:{n:'⌁ ELECTRIC SMELTER',d:'Needs 8 power. 2 washed silicon → 1 silicon wafer.',cost:{scrap:600,bst:6,bcu:10}},
  asm:{n:'✣ ASSEMBLER',d:'Needs 8 power. 2 copper plate + 1 silicon wafer + 1 gold bar → 1 circuit.',cost:{scrap:800,bst:10,bsw:4}},
  incin:{n:'♨ INCINERATOR',d:'Needs 2 power. Burns slag and ash you do not want to keep.',cost:{scrap:250,bfe:6}},
+ gemcut:{n:'◇ GEM CUTTER',d:'Needs 10 power. Cuts 1 washed diamond into 1 cut diamond. Diamonds no longer go in the furnace.',cost:{scrap:1200,bst:12,bci:2}},
+ centri:{n:'☢ CENTRIFUGE',d:'Needs 20 power. 2 washed uranium → 1 enriched uranium + 1 depleted uranium. 2 washed rare ore → 1 refined rare.',cost:{scrap:1500,bst:20,bci:6}},
+ rodfab:{n:'▮ ROD FABRICATOR',d:'Needs 12 power. 1 enriched uranium + 1 steel → 1 fuel rod.',cost:{scrap:2000,bst:25,bci:8}},
+ reactor:{n:'⚛ REACTOR',d:'Burns 1 fuel rod per 60 s for 80 power (+50% per mark). Every rod leaves 1 nuclear waste that must go into a touching Waste Vault, or the reactor shuts down.',cost:{scrap:5000,bst:60,bci:20,bdi:6}},
+ wvault:{n:'⚠ WASTE VAULT',d:'Takes nuclear waste from a touching reactor. Holds 20 per mark. Waste can never leave: when it is full, build another.',cost:{scrap:1200,bst:20}},
+ battery:{n:'▥ BATTERY BANK',d:'Stores 400 power-seconds per mark. Charges from spare power and covers shortfalls on its grid.',cost:{scrap:900,bcu:30,bci:4}},
+ arcf:{n:'ϟ ARC FURNACE',d:'Needs 40 power. 2 washed core → 1 core ingot. Core no longer goes in the furnace.',cost:{scrap:4000,bst:40,bci:10}},
+ plasma:{n:'◉ PLASMA REFINERY',d:'Needs 60 power. 1 refined rare + 1 circuit → 1 energy cell.',cost:{scrap:8000,bst:80,bci:30,brd:10}},
  crusher:{n:'⚙ CRUSHER',d:'Needs 4 power. Crushes 2 ore into 3 crushed ore (gold and silicon go on to a washer). Also crushes slag into gravel. Put a furnace next to it for +50% output. Marks gate the ore the same way as the furnace.',cost:{scrap:150,bcu:6,bfe:4}},
  gen:{n:'⚡ COAL GENERATOR',d:'Burns coal (MK1 coal) to make power for every building touching its chain, including through the Vault and storage boxes. Burns only while something needs power. Every 3 coal leaves 1 ash.',cost:{scrap:200,bcu:10}},
- smelter:{n:'♨ FURNACE',d:'Burns fuel (coal, or scrap if there is no coal) to smelt ore or crushed ore into plates and bars (crushed is 20% faster). Gold must be washed first. Every 3 smelts leave 1 slag. Marks gate the ore: MK1 copper, MK2 iron, MK3 gold and diamond, MK4 core. Coal, silicon, rare ore and uranium need machines that come later.',cost:{scrap:120,bcu:8}}};
+ smelter:{n:'♨ FURNACE',d:'Burns fuel (coal, or scrap if there is no coal) to smelt ore or crushed ore into plates and bars (crushed is 20% faster). Gold must be washed first. Diamond and core need their own machines. Every 3 smelts leave 1 slag. Marks gate the ore: MK1 copper, MK2 iron, MK3 gold and diamond, MK4 core. Coal, silicon, rare ore and uranium need machines that come later.',cost:{scrap:120,bcu:8}}};
 const EXPAND=[{pl:1,c:{scrap:8000,bfe:40,bau:20,gravel:40}},{pl:2,c:{scrap:32000,bau:60,bdi:30,gravel:80}},{pl:3,c:{scrap:128000,bdi:80,bco:40,gravel:160}},{pl:4,c:{gravel:320,scrap:512000,bco:150,bdi:120}}];
 const hasC=c=>Object.keys(c).every(k=>(G.store[k]||0)>=c[k]);
 function payC(c){for(const k in c)G.store[k]-=c[k]}
@@ -259,15 +268,17 @@ const reqTxt=r=>`Requires ${muBy(r[0]).n} LV ${r[1]}`;
 // Base tree: crusher, overclock, beacon, expansion and building marks hang off rig upgrades / each other
 const hasB=t=>Object.values(G.base.b).some(b=>b.t===t);
 const needB=(t,txt)=>hasB(t)?null:'Requires '+(/^[AEIOU]/.test(txt)?'an ':'a ')+txt;
-const BREQ={washer:()=>needB('crusher','Crusher'),tank:()=>needB('washer','Washer'),mill:()=>needB('gen','Coal Generator')||(Object.values(G.base.b).some(b=>b.t==='smelter'&&b.lv>=2)?null:'Requires a Furnace MK2'),
+const BREQ={gemcut:()=>needB('washer','Washer')||needB('mill','Steel Mill'),centri:()=>needB('asm','Assembler'),rodfab:()=>needB('centri','Centrifuge'),reactor:()=>needB('rodfab','Rod Fabricator'),wvault:()=>needB('rodfab','Rod Fabricator'),
+ battery:()=>needB('esmelt','Electric Smelter'),arcf:()=>needB('reactor','Reactor'),plasma:()=>needB('reactor','Reactor')||needB('centri','Centrifuge'),washer:()=>needB('crusher','Crusher'),tank:()=>needB('washer','Washer'),mill:()=>needB('gen','Coal Generator')||(Object.values(G.base.b).some(b=>b.t==='smelter'&&b.lv>=2)?null:'Requires a Furnace MK2'),
  esmelt:()=>needB('washer','Washer')||needB('mill','Steel Mill'),asm:()=>needB('esmelt','Electric Smelter'),incin:()=>needB('gen','Coal Generator'),gen:()=>muBy('pow').lvl>=2?null:'Requires Drill Power LV 2',crusher:()=>muBy('pow').lvl>=3?null:'Requires Drill Power LV 3',oc:()=>muBy('cargo').lvl>=2?null:'Requires Cargo Pod LV 2',beacon:()=>muBy('scan').lvl>=1?null:'Requires Scanner LV 1',
  expand:()=>(G.base.oc||0)>=2?null:'Requires Overclock LV 2',mk:b=>b.lv>=4&&(G.base.oc||0)<3?'Requires Overclock LV 3':b.lv>=2&&(G.base.oc||0)<1?'Requires Overclock LV 1':null};
 // Forge recipe: scrap plus bars; deeper levels need rarer bars (copper → iron → gold → diamond → core).
-function forgeCost(u){const L=u.lvl;return{scrap:costOf(u),bar:BAR_TIER[Math.min(4,Math.floor(L/3))],n:2+L}}
-function gunCost(g){return{scrap:HBW.upgradeCost(g)*3,bar:BAR_TIER[Math.min(4,Math.floor(g.level/5))],n:1+Math.floor(g.level/3)}}
-const has=(c)=>(G.store.scrap||0)>=c.scrap&&(G.store[c.bar]||0)>=c.n;
-function pay(c){G.store.scrap-=c.scrap;G.store[c.bar]-=c.n}
-const costTxt=c=>`${fmtN(c.scrap)} scrap · ${c.n} ${BARS[c.bar].n}`;
+// Spending tiers: 1 copper plate, 2 iron plate + steel, 3 gold bar + circuit, 4 cut diamond + fuel rod, 5 core ingot + energy cell
+const TIER_MATS=[['bcu'],['bfe','bst'],['bau','bci'],['bdi','brd'],['bco','bcl']];
+function tierCost(t,n,scrap){t=Math.min(4,t);const c={scrap};const m=TIER_MATS[t];c[m[0]]=n;if(m[1])c[m[1]]=Math.ceil(n/2);return c}
+function forgeCost(u){const L=u.lvl,c=tierCost(Math.floor(L/3),2+L,costOf(u));if(u.id==='hull'&&L>=9)c.dur=2+L;return c}
+function gunCost(g){return tierCost(Math.floor(g.level/5),1+Math.floor(g.level/3),HBW.upgradeCost(g)*3)}
+const has=c=>hasC(c),pay=c=>payC(c),costTxt=c=>costTxtC(c);
 function cargoW(){let w=0;for(const k in G.cargo)w+=G.cargo[k]*RES[k].w;return w}
 let fullT=0;
 function addCargo(k,n){const free=M.cap-cargoW(),can=Math.max(0,Math.min(n,Math.floor(free/RES[k].w+1e-9)));if(can)G.cargo[k]=(G.cargo[k]||0)+can;
@@ -807,6 +818,16 @@ function buildBase(){baseRoot=new B.TransformNode('base',scene);const vc=mats.vc
  BPROTO.asm={b:mk([part('Box',{width:.9,height:.18,depth:.9},[.24,.26,.3],[0,.09,0]),part('Cylinder',{height:.6,diameter:.14,tessellation:8},[.85,.65,.12],[-.3,.48,.3])],'pasm'),
   r:mk([part('Box',{width:.6,height:.08,depth:.1},[.85,.65,.12],[.2,0,0]),part('Box',{width:.08,height:.25,depth:.08},[.4,.42,.46],[.48,-.12,0])],'parm'),g:gm([.25,1,.45],'pasmg',.3,.03,.3,[.15,.2,-.1])};
  BPROTO.incin={b:mk([part('Box',{width:.85,height:.6,depth:.85},[.3,.22,.2],[0,.3,0]),part('Cylinder',{height:1.2,diameter:.3,tessellation:10},[.25,.2,.18],[0,1.2,0])],'pinc'),g:gm([1,.5,.1],'pincg',.4,.25,.04,[0,.3,-.43])};
+ BPROTO.gemcut={b:mk([part('Box',{width:.9,height:.45,depth:.8},[.3,.32,.36],[0,.22,0]),part('Cylinder',{height:.1,diameter:.5,tessellation:16},[.6,.65,.7],[0,.5,0]),part('Box',{width:.1,height:.5,depth:.1},[.25,.25,.3],[.3,.7,.25])],'pgem'),g:gm([.4,1,1],'pgemg',.06,.4,.06,[0,.75,0])};
+ BPROTO.centri={b:mk([part('Box',{width:.95,height:.2,depth:.95},[.25,.25,.28],[0,.1,0]),part('Torus',{diameter:.85,thickness:.06,tessellation:20},[.85,.75,.1],[0,.22,0])],'pcen'),
+  r:mk([part('Cylinder',{height:1,diameter:.55,tessellation:16},[.7,.72,.62],[0,0,0]),part('Box',{width:.58,height:.12,depth:.12},[.95,.8,.1],[0,.2,0]),part('Box',{width:.12,height:.12,depth:.58},[.12,.12,.12],[0,-.2,0])],'pcrot'),g:gm([.7,1,.2],'pceng',.3,.04,.3,[0,1.18,0])};
+ BPROTO.rodfab={b:mk([part('Box',{width:.9,height:.3,depth:.85},[.3,.33,.36],[0,.15,0]),part('Box',{width:.9,height:.15,depth:.85},[.3,.33,.36],[0,1.15,0]),part('Box',{width:.1,height:.9,depth:.1},[.4,.42,.46],[-.38,.7,0]),part('Box',{width:.1,height:.9,depth:.1},[.4,.42,.46],[.38,.7,0])],'prod'),g:gm([.3,1,.5],'prodg',.42,.6,.1,[0,.62,0])};
+ BPROTO.reactor={b:mk([part('Cylinder',{height:.3,diameter:1,tessellation:20},[.32,.34,.36],[0,.15,0]),part('Sphere',{diameter:.95,segments:16},[.55,.6,.62],[0,.3,0],null,[1,.9,1]),part('Torus',{diameter:.98,thickness:.07,tessellation:24},[.85,.75,.1],[0,.32,0])],'preac'),g:gm([.4,1,.3],'preacg',.3,.3,.3,[0,.85,0])};
+ BPROTO.wvault={b:mk([part('Box',{width:.95,height:.7,depth:.95},[.26,.28,.24],[0,.35,0]),part('Box',{width:.97,height:.14,depth:.97},[.95,.8,.1],[0,.5,0]),part('Box',{width:.6,height:.06,depth:.6},[.12,.12,.12],[0,.72,0])],'pwv')};
+ BPROTO.battery={b:mk([part('Box',{width:.9,height:.12,depth:.9},[.22,.24,.26],[0,.06,0]),...[-.25,.25].flatMap(a=>[-.25,.25].map(c=>part('Cylinder',{height:.75,diameter:.32,tessellation:12},[.2,.3,.35],[a,.5,c])))],'pbat'),g:gm([.3,1,.6],'pbatg',.08,.7,.9,[-.46,.45,0])};
+ BPROTO.arcf={b:mk([part('Box',{width:.95,height:.9,depth:.9},[.25,.2,.3],[0,.45,0]),part('Cylinder',{height:.5,diameter:.12,tessellation:8},[.6,.6,.65],[-.25,1.15,0]),part('Cylinder',{height:.5,diameter:.12,tessellation:8},[.6,.6,.65],[.25,1.15,0])],'parc'),g:gm([.8,.4,1],'parcg',.6,.08,.08,[0,1.35,0])};
+ BPROTO.plasma={b:mk([part('Cylinder',{height:.35,diameter:1,tessellation:20},[.2,.18,.25],[0,.17,0]),part('Cylinder',{height:.6,diameter:.3,tessellation:12},[.4,.38,.45],[0,.6,0])],'ppla'),
+  r:mk([part('Torus',{diameter:.85,thickness:.1,tessellation:28},[.9,.3,.9],[0,0,0])],'pplar'),g:gm([1,.3,1],'pplag',.24,.24,.24,[0,1,0])};
  BPROTO.gen={b:mk([part('Box',{width:.9,height:.5,depth:.85},[.2,.21,.23],[0,.25,0]),part('Cylinder',{height:1.5,diameterTop:.22,diameterBottom:.32,tessellation:10},[.3,.3,.32],[.22,1.1,.18]),part('Cylinder',{height:.06,diameter:.36,tessellation:10},[.85,.65,.12],[.22,1.75,.18]),part('Box',{width:.5,height:.35,depth:.5},[.36,.18,.14],[-.15,.66,-.1]),part('Box',{width:.95,height:.06,depth:.9},[.85,.65,.12],[0,.5,0])],'pgen'),
   g:gm([1,.25,.08],'pgeng',.52,.08,.52,[-.15,.86,-.1])};
  BPROTO.smelter={b:mk([part('Box',{width:.9,height:1.05,depth:.85},[.42,.3,.26],[0,.52,0]),part('Box',{width:.95,height:.1,depth:.9},[.25,.2,.18],[0,1.07,0]),part('Box',{width:.26,height:.5,depth:.26},[.3,.26,.24],[.25,1.35,.18])],'psmelt'),g:gm([1,.45,.1],'psmg',.45,.32,.04,[0,.36,-.44])};
@@ -815,14 +836,14 @@ function buildBase(){baseRoot=new B.TransformNode('base',scene);const vc=mats.vc
 const BPROTO={};let CONN,GHOST,bInst=[];
 function syncBuildings(){GRIDS=null;for(const m of bInst)m.dispose();bInst=[];if(!G.base||!BPROTO.box)return;const BS=G.base.b;
  const add=(proto,x,y,tag,b)=>{const m=proto.createInstance('bi');m.parent=baseRoot;m.position.set(x+.5,0,y+.5);m.tag=tag;m.bref=b;bInst.push(m);return m};
- for(const key in BS){const b=BS[key],[x,y]=key.split(',').map(Number),P0=BPROTO[b.t];add(P0.b,x,y,'b',b).scaling.setAll(.92+b.lv*.04);if(P0.r){const rr=add(P0.r,x,y,'r',b);rr.position.y=b.t==='washer'?.7:b.t==='asm'?.8:.58;if(b.t==='asm')rr.position.x-=.3,rr.position.z+=.3}if(P0.g)add(P0.g,x,y,'g',b)}
+ for(const key in BS){const b=BS[key],[x,y]=key.split(',').map(Number),P0=BPROTO[b.t];add(P0.b,x,y,'b',b).scaling.setAll(.92+b.lv*.04);if(P0.r){const rr=add(P0.r,x,y,'r',b);rr.position.y=b.t==='washer'?.7:b.t==='asm'?.8:b.t==='centri'?.75:b.t==='plasma'?1:.58;if(b.t==='asm')rr.position.x-=.3,rr.position.z+=.3}if(P0.g)add(P0.g,x,y,'g',b)}
  const linked=(x,y)=>!!bAt(x,y)||(x===MACH[0].x&&y===MACH[0].y);
  for(const key in BS){const[x,y]=key.split(',').map(Number);for(const[dx,dy]of[[1,0],[0,1],[-1,0],[0,-1]]){const nx=x+dx,ny=y+dy;if(!linked(nx,ny))continue;if(bAt(nx,ny)&&(dx<0||dy<0))continue;const c=CONN.createInstance('ci');c.parent=baseRoot;c.position.set(x+.5+dx*.5,0,y+.5+dy*.5);c.rotation.y=dx?0:Math.PI/2;c.scaling.x=.55;bInst.push(c)}}}
-function updateBaseVis(dt){updateItemsVis(dt);for(const m of bInst){if(m.tag==='r'&&m.bref.job){if(m.bref.t==='asm')m.rotation.y=Math.sin(G.t*3)*1.2;else m.rotation.x+=dt*10}if(m.tag==='g'){m.isVisible=!!(m.bref.job||m.bref._on);if(m.bref._on&&Math.random()<dt*3)burst(m.position.x+.22,1.9,m.position.z+.28,3,[.5,.5,.5],[.25,.25,.25],.6);if(m.bref.job)m.scaling.y=1+Math.sin(G.t*30+m.position.x)*.15}}
+function updateBaseVis(dt){updateItemsVis(dt);for(const m of bInst){if(m.tag==='r'&&m.bref.job){if(m.bref.t==='asm')m.rotation.y=Math.sin(G.t*3)*1.2;else if(m.bref.t==='centri'||m.bref.t==='plasma')m.rotation.y+=dt*(m.bref.t==='centri'?14:4);else m.rotation.x+=dt*10}if(m.tag==='g'&&m.bref.t==='battery'){m.isVisible=(m.bref.ch||0)>1;m.scaling.y=Math.max(.02,(m.bref.ch||0)/battCap(m.bref));m.position.y=.1+.35*m.scaling.y;continue}if(m.tag==='g'){m.isVisible=!!(m.bref.job||m.bref._on);if(m.bref.t==='reactor'&&m.bref._on)m.scaling.setAll(1+Math.sin(G.t*4)*.15);if(m.bref._on&&m.bref.t==='gen'&&Math.random()<dt*3)burst(m.position.x+.22,1.9,m.position.z+.28,3,[.5,.5,.5],[.25,.25,.25],.6);if(m.bref.job)m.scaling.y=1+Math.sin(G.t*30+m.position.x)*.15}}
  if(G.placing){const t=placeTarget(),ok=t&&placeValid(t[0],t[1]);GHOST.setEnabled(!!t);if(t){GHOST.position.set(t[0]+.5,.05,t[1]+.5);GHOST.material.emissiveColor.set(ok?.2:1,ok?1:.2,ok?.4:.2)}$('bPlaceOk').disabled=!ok||!hasC(BT[G.placing].cost)}}
 /* ---- Abyssal ore block models (assets/ores/glb): visuals only, no resource or mining logic ---- */
 // world blocks: draw group index -> model; base products: item -> model
-const ORE_GLB={world:{0:'copper',1:'iron',2:'diamond',3:'gold',4:'core',5:'hive_chitin',9:'obsidian',10:'coal',11:'silicon',12:'rare',13:'uranium'},items:{bcu:'plate',bfe:'iron_plate',bau:'gold_bar',bdi:'cut_diamond',bco:'core_ingot',bst:'steel',bsw:'silicon_wafer',bci:'circuit',slag:'slag',ash:'ash',sludge:'sludge'}};
+const ORE_GLB={world:{0:'copper',1:'iron',2:'diamond',3:'gold',4:'core',5:'hive_chitin',9:'obsidian',10:'coal',11:'silicon',12:'rare',13:'uranium'},items:{bcu:'plate',bfe:'iron_plate',bau:'gold_bar',bdi:'cut_diamond',bco:'core_ingot',bst:'steel',bsw:'silicon_wafer',bci:'circuit',slag:'slag',ash:'ash',sludge:'sludge',brd:'rod',bcl:'cell',dur:'depleted_uranium',nw:'nuclear_waste'}};
 const GLBM={},flying=[],boxShow=new Map();
 async function loadOreModels(){if(!B.SceneLoader||!B.SceneLoader.ImportMeshAsync||window.__NULL)return;
  const names=[...new Set([...Object.values(ORE_GLB.world),...Object.values(ORE_GLB.items)])];
@@ -848,7 +869,7 @@ function startPlace(t){closeBase();G.placing=t;$('placeTxt').textContent=BT[t].n
 function endPlace(){G.placing=null;if(GHOST)GHOST.setEnabled(false);const pb=$('placeBar');if(pb)pb.style.display='none';nearM=null}
 function confirmPlace(){const t=G.placing,p=placeTarget();if(!t||!p||!placeValid(p[0],p[1])||!hasC(BT[t].cost))return;payC(BT[t].cost);G.base.b[p[0]+','+p[1]]={t,lv:1,inv:{},out:{},job:null};syncBuildings();burst(p[0]+.5,.6,p[1]+.5,24,[1,.8,.3],[.6,.4,.1],3);
  toast(BT[t].n.replace(/^\S+\s/,'')+' BUILT');if(!hasC(BT[t].cost))endPlace();saveGame()}
-const bUpCost=b=>{const c={scrap:100*Math.pow(2,b.lv-1)};c[BAR_TIER[Math.min(4,b.lv-1)]]=4+2*b.lv;return c};
+const bUpCost=b=>tierCost(b.lv-1,4+2*b.lv,100*Math.pow(2,b.lv-1));
 const ocCost=l=>{const c={scrap:400*Math.pow(2,l),bfe:6+4*l};if(l>=2)c.bau=4+2*l;return c};
 const beaconCost=l=>{const c={scrap:300*Math.pow(2,l),bcu:10+5*l};if(l>=1)c.bfe=8+4*l;return c};
 function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';$('bBuild').style.display=w==='base'?'':'none';if(w!=='base')endPlace();
@@ -861,7 +882,9 @@ function bAt(x,y){return G.base.b[x+','+y]}
 function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
 const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
 // ---- power: buildings that touch (through the Vault and boxes too) share one grid ----
-const POWER={crusher:4,washer:4,mill:10,esmelt:8,asm:8,incin:2};                       // demand per running machine
+const POWER={crusher:4,washer:4,mill:10,esmelt:8,asm:8,incin:2,gemcut:10,centri:20,rodfab:12,arcf:40,plasma:60};
+const NOREC={gen:1,reactor:1,wvault:1,battery:1};
+const reactOut=b=>80*(1+.5*(b.lv-1)),battCap=b=>400*b.lv,vaultCap=b=>20*b.lv;                       // demand per running machine
 const genOut=b=>12*(1+.5*(b.lv-1));            // supply per burning generator
 let GRIDS=null;
 function buildGrids(){const nodes=Object.keys(G.base.b),vk=MACH[0].x+','+MACH[0].y,all=new Set([...nodes,vk]),seen=new Set();GRIDS=[];
@@ -872,10 +895,19 @@ function pullFrom(nb,x,y,it,n){let got=0;const S=G.store;for(const[nx,ny]of nb){
   else if(o&&o.t!=='box'&&o.out[it]>0){const tk=Math.min(n-got,o.out[it]);o.out[it]-=tk;got+=tk;flowFx(nx,ny,x,y,it)}}return got}
 function powerTick(st){if(!GRIDS)buildGrids();let TS=0,TD=0;
  for(const g of GRIDS){let dem=0,sup=0;const gens=[];
-  for(const k of g){const b=G.base.b[k];if(!b)continue;if(POWER[b.t]&&(b.job||b._want))dem+=POWER[b.t];if(b.t==='gen')gens.push([k,b])}
-  for(const[k,b]of gens){b._on=false;if(dem<=sup)continue;const[x,y]=k.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
-   if(!(b.fuel>0)&&ORE_MK.cl<=b.lv&&(pullFrom(nb,x,y,'cl',1)||(g.some(k2=>{const[a,c]=k2.split(',').map(Number);return isPort(a,c)})&&G.store.cl>0&&(G.store.cl--,1)))){b.fuel=(b.fuel||0)+15*(1+.25*(b.lv-1));b.coal=(b.coal||0)+1;if(b.coal>=3){b.coal-=3;b.out.ash=(b.out.ash||0)+1}}
+  const reacts=[],batts=[];
+  for(const k of g){const b=G.base.b[k];if(!b)continue;if(POWER[b.t]&&(b.job||b._want))dem+=POWER[b.t];if(b.t==='gen')gens.push([k,b]);if(b.t==='reactor')reacts.push([k,b]);if(b.t==='battery')batts.push(b)}
+  const hasPort=g.some(k2=>{const[a,c]=k2.split(',').map(Number);return isPort(a,c)});
+  const wantP=()=>dem>sup||batts.some(b=>(b.ch||0)<battCap(b)-1);
+  // reactors first: big steady output; waste must leave through a touching vault
+  for(const[k,b]of reacts){b._on=false;const[x,y]=k.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);b._down=(b.out.nw||0)>=2;if(b._down||!wantP())continue;
+   if(!(b.fuel>0)&&(pullFrom(nb,x,y,'brd',1)||(hasPort&&G.store.brd>0&&(G.store.brd--,1)))){b.fuel=(b.fuel||0)+60;b.out.nw=(b.out.nw||0)+1}
+   if(b.fuel>0){b.fuel-=st;b._on=true;sup+=reactOut(b)}}
+  for(const[k,b]of gens){b._on=false;if(!wantP())continue;const[x,y]=k.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
+   if(!(b.fuel>0)&&ORE_MK.cl<=b.lv&&(pullFrom(nb,x,y,'cl',1)||(hasPort&&G.store.cl>0&&(G.store.cl--,1)))){b.fuel=(b.fuel||0)+15*(1+.25*(b.lv-1));b.coal=(b.coal||0)+1;if(b.coal>=3){b.coal-=3;b.out.ash=(b.out.ash||0)+1}}
    if(b.fuel>0){b.fuel-=st;b._on=true;sup+=genOut(b)}}
+  {let d=sup-dem;if(d>0){for(const b of batts){const add=Math.min(d*st,battCap(b)-(b.ch||0));b.ch=(b.ch||0)+add;d-=add/st;if(d<=0)break}}
+   else if(d<0){let need=-d;for(const b of batts){const take=Math.min(b.ch||0,need*st);b.ch=(b.ch||0)-take;sup+=take/st;need-=take/st;if(need<=0)break}}}
   const r=dem?Math.min(1,sup/dem):1;for(const k of g){const b=G.base.b[k];if(b)b._pr=r;}
   TS+=sup;TD+=dem}
  G._pw={sup:TS,dem:TD}}
@@ -884,15 +916,20 @@ function powerTick(st){if(!GRIDS)buildGrids();let TS=0,TD=0;
 const ORE_MK={cu:1,cl:1,fe:2,si:2,au:3,di:3,co:4,ra:4,ur:5};
 // Recipe table: every machine process is data. in/out are item->count; gate is the ore its mark must allow.
 const RECIPES=[];
-for(const r of[...RAW,'si'])RECIPES.push({m:'crusher',in:{[r]:2},out:{['x'+r]:3},t:1.5,gate:r});
+for(const r of[...RAW,'si','ur','ra'])RECIPES.push({m:'crusher',in:{[r]:2},out:{['x'+r]:3},t:1.5,gate:r});
 RECIPES.push({m:'crusher',in:{slag:2},out:{gravel:2},t:2});
-for(const r of RAW){if(r==='au')continue;const b0=BARS['b'+r];RECIPES.push({m:'smelter',in:{['x'+r]:b0.need},out:{['b'+r]:1},t:b0.time*.8,gate:r,byp:{slag:1/3}});RECIPES.push({m:'smelter',in:{[r]:b0.need},out:{['b'+r]:1},t:b0.time,gate:r,byp:{slag:1/3}})}
+for(const r of RAW){if(r==='au'||r==='di'||r==='co')continue;const b0=BARS['b'+r];RECIPES.push({m:'smelter',in:{['x'+r]:b0.need},out:{['b'+r]:1},t:b0.time*.8,gate:r,byp:{slag:1/3}});RECIPES.push({m:'smelter',in:{[r]:b0.need},out:{['b'+r]:1},t:b0.time,gate:r,byp:{slag:1/3}})}
 RECIPES.push({m:'smelter',in:{wau:2},out:{bau:1},t:4,gate:'au',byp:{slag:1/3}});
-for(const r of['au','si']){RECIPES.push({m:'washer',in:{['x'+r]:2,ash:1},out:{['w'+r]:2},t:2.5,gate:r});RECIPES.push({m:'washer',in:{['x'+r]:2},out:{['w'+r]:2,sludge:1},t:2.5,gate:r})}
+for(const r of['au','si','di','co','ur','ra']){RECIPES.push({m:'washer',in:{['x'+r]:2,ash:1},out:{['w'+r]:2},t:2.5,gate:r});RECIPES.push({m:'washer',in:{['x'+r]:2},out:{['w'+r]:2,sludge:1},t:2.5,gate:r})}
 RECIPES.push({m:'tank',in:{sludge:2},out:{scrap:3},t:3});
 RECIPES.push({m:'mill',in:{bfe:2,cl:1},out:{bst:1,slag:1},t:5,gate:'fe'});
 RECIPES.push({m:'esmelt',in:{wsi:2},out:{bsw:1},t:4,gate:'si'});
 RECIPES.push({m:'asm',in:{bcu:2,bsw:1,bau:1},out:{bci:1},t:6,gate:'au'});
+RECIPES.push({m:'gemcut',in:{wdi:1},out:{bdi:1},t:5,gate:'di'});
+RECIPES.push({m:'arcf',in:{wco:2},out:{bco:1},t:7,gate:'co'});
+RECIPES.push({m:'centri',in:{wur:2},out:{eur:1,dur:1},t:6,gate:'ur'});RECIPES.push({m:'centri',in:{wra:2},out:{rra:1},t:6,gate:'ra'});
+RECIPES.push({m:'rodfab',in:{eur:1,bst:1},out:{brd:1},t:6,gate:'ur'});
+RECIPES.push({m:'plasma',in:{rra:1,bci:1},out:{bcl:1},t:8,gate:'ra'});
 RECIPES.push({m:'incin',in:{slag:1},out:{},t:1});RECIPES.push({m:'incin',in:{ash:1},out:{},t:1});
 const canRun=(b,rc)=>!rc.gate||ORE_MK[rc.gate]<=b.lv;
 const recipesFor=b=>RECIPES.filter(rc=>rc.m===b.t&&canRun(b,rc));
@@ -906,7 +943,8 @@ function smeltTick(dt){const BS=G.base;if(!BS)return;BS.acc=(BS.acc||0)+dt;if(BS
  for(const key in BS.b){const b=BS.b[key];if(b.t==='box')continue;const[x,y]=key.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
   const outN=Object.values(b.out).reduce((a,v)=>a+v,0);
   if(b.job&&typeof b.job.out==='string')b.job.out={[b.job.out]:b.job.n||1};   // pre-recipe saves
-  if(b.t==='gen'){}else if(!b.job&&outN<8){b._want=false;for(const rc of recipesFor(b)){
+  if(b.t==='wvault'){for(const[nx,ny]of nb){const o=bAt(nx,ny);if(o&&o.out&&o.out.nw>0&&(b.waste||0)<vaultCap(b)){const tk=Math.min(o.out.nw,vaultCap(b)-(b.waste||0));o.out.nw-=tk;b.waste=(b.waste||0)+tk;flowFx(nx,ny,x,y,'nw')}}continue}
+  if(NOREC[b.t]){}else if(!b.job&&outN<8){b._want=false;for(const rc of recipesFor(b)){
     let ok=true;for(const it in rc.in){let av=b.inv[it]||0;for(const[nx,ny]of nb){const n=bAt(nx,ny);if(isPort(nx,ny))av+=S[it]||0;else if(n&&n.t!=='box')av+=n.out[it]||0}if(av<rc.in[it]){ok=false;break}}
     if(!ok)continue;
     b._want=true;
@@ -933,13 +971,13 @@ function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.starts
  $('bpH').textContent=openMach==='build'?'▦ BUILD':BB?BT[BB.t].n+' MK'+BB.lv:MACH.find(m=>m.id===openMach).n;const sc=body.scrollTop;body.innerHTML='';
  const btn=(t,fn,col,dis)=>{const b=document.createElement('button');b.className='pb';b.textContent=t;if(col)b.style.borderColor=col;b.disabled=!!dis;b.onclick=()=>{fn();renderBase();hud()};return b};
  const rk=Object.keys(RES),bk=BAR_TIER;
- if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Furnace → Storage Box. Crushers need power: put a Coal Generator anywhere on the same chain. Later: Crusher → Washer (+ Settling Tank) → Electric Smelter → Assembler. Furnaces burn coal, or scrap if there is none. Products flow on their own, even while you are in the mine.</p>');
+ if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Furnace → Storage Box. Crushers need power: put a Coal Generator anywhere on the same chain. Later: Crusher → Washer (+ Settling Tank) → Electric Smelter → Assembler, then Centrifuge → Rod Fabricator → Reactor (+ Waste Vault) and the Plasma Refinery. Furnaces burn coal, or scrap if there is none. Products flow on their own, even while you are in the mine.</p>');
   for(const t in BT){const lk=BREQ[t]?BREQ[t]():null,row=document.createElement('div');row.className='row';if(lk)row.style.opacity=.55;row.innerHTML=`<div><b>${BT[t].n}</b><small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row)}}
  if(BB){const[x,y]=bk0.split(',').map(Number),links=N4.map(n=>[x+n[0],y+n[1]]).map(([a,b])=>a===MACH[0].x&&b===MACH[0].y?'Vault':bAt(a,b)?BT[bAt(a,b).t].n.replace(/^\S+\s/,''):null).filter(Boolean);
-  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'&&BB.t!=='gen'?`<p>Can process: ${tierTxt(BB)}${BB.lv<5&&nextTxt(BB)?` · MK${BB.lv+1} adds ${nextTxt(BB)}`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
-  if(!GRIDS)buildGrids();{const g=GRIDS.find(g=>g.includes(bk0));let sup=0,dem=0;for(const k of g||[]){const o=G.base.b[k];if(!o)continue;if(o.t==='gen'&&o._on)sup+=genOut(o);if(POWER[o.t]&&(o.job||o._want))dem+=POWER[o.t]}
-   body.insertAdjacentHTML('beforeend',`<p>⚡ Grid: <b style="color:${sup>=dem?'#6fcf6a':'#d8503a'}">${sup} supply / ${dem} demand</b>${POWER[BB.t]?` · this machine needs ${POWER[BB.t]}${BB._pr<1?` · <span style="color:#d8503a">running at ${Math.round((BB._pr||0)*100)}%</span>`:''}`:''}${BB.t==='gen'?` · ${BB._on?'<span style="color:#ff8a3a">burning</span>':'idle'} · fuel ${Math.max(0,BB.fuel||0).toFixed(0)}s · output ${genOut(BB)}`:''}${BB.t==='smelter'?` · fuel ${Math.max(0,BB.fuel||0).toFixed(0)}s${BB._nofuel?' · <span style="color:#d8503a">needs coal or scrap</span>':''}`:''}</p>`)}
-  if(BB.t!=='box'&&BB.t!=='gen'){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+(typeof j.out==='string'?ITEM[j.out].n:Object.keys(j.out).map(k=>ITEM[k].n).join(' + ')):'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+(BB.out.sludge>=4?'<p style="color:#d8503a">Sludge is backing up. Put a Settling Tank next to this washer.</p>':'')+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
+  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'&&!NOREC[BB.t]?`<p>Can process: ${tierTxt(BB)}${BB.lv<5&&nextTxt(BB)?` · MK${BB.lv+1} adds ${nextTxt(BB)}`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
+  if(!GRIDS)buildGrids();{const g=GRIDS.find(g=>g.includes(bk0));let sup=0,dem=0;for(const k of g||[]){const o=G.base.b[k];if(!o)continue;if(o.t==='gen'&&o._on)sup+=genOut(o);if(o.t==='reactor'&&o._on)sup+=reactOut(o);if(POWER[o.t]&&(o.job||o._want))dem+=POWER[o.t]}
+   body.insertAdjacentHTML('beforeend',`<p>⚡ Grid: <b style="color:${sup>=dem?'#6fcf6a':'#d8503a'}">${sup} supply / ${dem} demand</b>${POWER[BB.t]?` · this machine needs ${POWER[BB.t]}${BB._pr<1?` · <span style="color:#d8503a">running at ${Math.round((BB._pr||0)*100)}%</span>`:''}`:''}${BB.t==='reactor'?` · ${BB._down?'<span style="color:#d8503a">SHUT DOWN: waste backing up, put a Waste Vault next to it</span>':BB._on?'<span style="color:#9cff5a">running</span>':'idle'} · rod ${Math.max(0,BB.fuel||0).toFixed(0)}s · output ${reactOut(BB)}`:''}${BB.t==='battery'?` · charge ${Math.round(BB.ch||0)}/${battCap(BB)}`:''}${BB.t==='wvault'?` · waste <b style="color:${(BB.waste||0)>=vaultCap(BB)?'#d8503a':'#96ec3c'}">${BB.waste||0}/${vaultCap(BB)}</b>${(BB.waste||0)>=vaultCap(BB)?' FULL':''}`:''}${BB.t==='gen'?` · ${BB._on?'<span style="color:#ff8a3a">burning</span>':'idle'} · fuel ${Math.max(0,BB.fuel||0).toFixed(0)}s · output ${genOut(BB)}`:''}${BB.t==='smelter'?` · fuel ${Math.max(0,BB.fuel||0).toFixed(0)}s${BB._nofuel?' · <span style="color:#d8503a">needs coal or scrap</span>':''}`:''}</p>`)}
+  if(BB.t!=='box'&&!NOREC[BB.t]){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+(typeof j.out==='string'?ITEM[j.out].n:Object.keys(j.out).map(k=>ITEM[k].n).join(' + ')):'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+(BB.out.sludge>=4?'<p style="color:#d8503a">Sludge is backing up. Put a Settling Tank next to this washer.</p>':'')+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
   const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed${BB.t!=='box'&&BB.lv<5&&nextTxt(BB)?' · unlocks '+nextTxt(BB):''}</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
   row.appendChild(btn(mx?'MAX':lk?'LOCKED':'UPGRADE',()=>{if(mx||lk||!hasC(uc))return;payC(uc);BB.lv++;syncBuildings();openMach='bld:'+bk0},'#e3a53a',mx||!!lk||!hasC(uc)));body.appendChild(row);
   body.appendChild(btn('DEMOLISH · 50% REFUND',()=>{for(const k in BT[BB.t].cost)S[k]=(S[k]||0)+Math.floor(BT[BB.t].cost[k]/2);for(const o of[BB.inv,BB.out])for(const k in o)S[k]=(S[k]||0)+o[k];delete G.base.b[bk0];syncBuildings();closeBase()},'#d8503a'))}
@@ -951,7 +989,7 @@ function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.starts
   body.insertAdjacentHTML('beforeend','<h2 style="margin-top:6px">RIG UPGRADE TREE</h2>');
   const walk=(parent,depth)=>{for(const u of MU){const r=TREE[u.id];if((r?r[0]:null)!==parent)continue;const c=forgeCost(u),mx=u.lvl>=u.max,ok=unlocked(u),row=document.createElement('div');row.className='row';
     row.style.marginLeft=(depth*22)+'px';if(depth)row.style.borderLeft='3px solid '+(ok?'#e3a53a':'#3a4650');if(!ok)row.style.opacity=.55;
-    row.innerHTML=`<div><b>${depth?'└ ':''}${u.ic} ${u.n} <span style="color:#6f8088;font-size:14px">LV ${u.lvl}</span></b><small>${u.d}</small><small style="color:${mx?'#6f8088':!ok?'#d8503a':has(c)?'#6fcf6a':'#d8503a'}">${mx?'MAX':!ok?'🔒 '+reqTxt(r):costTxt(c)}</small></div>`;
+    row.innerHTML=`<div><b>${depth?'└ ':''}${u.ic} ${u.n} <span style="color:#6f8088;font-size:14px">LV ${u.lvl}</span></b><small>${u.d}</small><small style="color:${mx?'#6f8088':'#d8503a'}">${mx?'MAX':!ok?'🔒 '+reqTxt(r):costTxt(c)}</small></div>`;
     row.appendChild(btn(mx?'MAX':ok?'FORGE':'LOCKED',()=>{if(mx||!ok||!has(c))return;pay(c);u.lvl++;u.f(u.lvl);burst(P.x,.8,P.y,20,[1,.6,.2],[1,.3,.1],3)},'#e3a53a',mx||!ok||!has(c)));body.appendChild(row);walk(u.id,depth+1)}};
   walk(null,0)}
  if(openMach==='forge'){const BS=G.base;body.insertAdjacentHTML('beforeend','<h2 style="margin-top:12px">BASE UPGRADES</h2>');
@@ -1039,7 +1077,7 @@ function renderArmory(){$('armOre').textContent=fmtN(G.store.scrap||0)+' scrap';
  if(!sel.length)act.textContent='Tap items to select. 3 of the same rarity FUSE into the next rarity. 2 copies of the same gun MERGE into a higher level.';
  if(sel.length===1){const it=sel[0],w=where(it);
   if(it.kind==='weapon'&&w==='inv'){for(const s of[0,1])btn('EQUIP '+(s?'②':'①'),()=>{W.inv.splice(W.inv.indexOf(it),1);if(W.eq[s])W.inv.push(W.eq[s]);W.eq[s]=it;sel=[]})}
-  if(it.kind==='weapon'){const c=gunCost(it);if(G.where==='base'){const b=btn('UPGRADE · '+costTxt(c),()=>{if(!has(c))return;pay(c);HBW.upgrade(it)},'#e3a53a');b.disabled=!has(c)}else act.appendChild(Object.assign(document.createElement('span'),{textContent:'Upgrade guns at the base armory rack.'}))}
+  if(it.kind==='weapon'){const c=gunCost(it);if(G.where==='base'){const b=btn('UPGRADE',()=>{if(!has(c))return;pay(c);HBW.upgrade(it)},'#e3a53a');b.disabled=!has(c);const sp=document.createElement('span');sp.innerHTML=costTxt(c);act.appendChild(sp)}else act.appendChild(Object.assign(document.createElement('span'),{textContent:'Upgrade guns at the base armory rack.'}))}
   if(it.kind==='weapon'&&w!=='inv'&&W.eq.filter(Boolean).length>1)btn('UNEQUIP',()=>{const s=W.eq.indexOf(it);W.eq[s]=null;W.inv.push(it);sel=[]})
   if(it.kind==='attachment')W.eq.forEach((g,s)=>{if(g){const b=btn('ATTACH → '+(s?'②':'①'),()=>{if(HBW.attach(g,it)){W.inv.splice(W.inv.indexOf(it),1);sel=[]}else armMsg('NO FREE SLOT')});b.disabled=g.attachments.length>=HBW.slots(g)}});
   if(w==='inv')btn('SALVAGE +'+fmtN(HBW.salvageValue(it)),()=>salvage(sel),'#d8503a')}
