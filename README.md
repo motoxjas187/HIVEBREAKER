@@ -15,6 +15,7 @@ Open `index.html` in a modern browser. It loads Babylon.js from a CDN, so it nee
 ## Systems
 - **Blocks:** every block shows its health like Brickbreaker. Health scales with distance from the start and with run time.
 - **Ore:** mining drops ore, which buys rig upgrades (drill power, speed, reach, yield, magnet, hull, scanner). Gold relic blocks give a free upgrade.
-- **Weapon upgrades:** kills drop tech cores. Each level-up offers 3 weapon upgrades: split shot, ricochet, piercing, explosive rounds, chain lightning, gun drones and more.
+- **Guns and attachments:** kills drop loot from HORDEFALL's weapon system (`weapons/weapons.js`): 16 gun bases, 11 rarities, 21 prefixes, 15 attachments and 5 elements. Loot quality scales with distance from the start, run time and prestige. Queens, brutes, elites and hives drop Unique guns with special perks.
+- **Armory (⚔ ARMS):** equip 2 guns that fire together, attach and detach parts, upgrade gun levels with ore, fuse 3 items of the same rarity into the next rarity, merge 2 copies of a gun into a higher level, auto-fuse and salvage. The armory is saved and kept through death and prestige.
 - **Enemy squads:** stalkers, spitters, brutes, flyers and queens gather at their hive, hunt as a group once you're spotted, flank, keep their distance, retreat to heal, and dig toward you.
 - **Hives:** a destroyed hive regrows one tier stronger, and hives you've found send raids from areas you've already visited.
