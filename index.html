@@ -114,7 +114,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 <div id="placeBar"><span id="placeTxt"></span><button class="pb" id="bPlaceOk" style="background:#2f9e50;color:#fff">✓ PLACE</button><button class="pb" id="bPlaceX" style="background:#b3382a;color:#fff">✕</button></div>
 <div id="recallBar"><i></i><span>RECALLING TO BASE</span></div>
 <div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><p style="margin:8px 0 0;color:#8fa0a8;font-size:14px;letter-spacing:.1em">SETTINGS</p><div class="chips" id="pauseOpts" style="justify-content:center"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSnd">SOUND: ON</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">ABANDON WORLD</button></div></div>
-<div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><p>The world is lost. You keep every rig upgrade, your armory, your base storage and your prestige. 90% of the cargo you were carrying is lost.</p><div class="kv" id="deadStats"></div><button class="go" id="bAgain">REDEPLOY</button></div></div>
+<div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><p>Your mech was recovered to base. The mine stays as it is, and its creatures regroup at their hives. You keep everything except 90% of the cargo you were carrying. The mine only resets when you prestige.</p><div class="kv" id="deadStats"></div><button class="go" id="bAgain">CONTINUE AT BASE</button></div></div>
 <div id="load">LOADING ENGINE…</div>
 
 <script src="weapons/weapons.js"></script>
@@ -514,7 +514,7 @@ function rebuild(){G.blockDirty=false;const px=Math.floor(P.x),py=Math.floor(P.y
  for(let y=win.y0;y<=win.y1;y++)for(let x=win.x0;x<=win.x1;x++){const k=K(x,y),rev=revealed.has(k),open=isOpen(x,y);
   if(nb>=MAXI||nf>=MAXI||nl>=MAXI)break;
   if(!rev){const h=1.25+h2(x,y,21)*.5,v=.85+h2(x,y,22)*.3;setM(buf.fog,nf,x+.5,h/2,y+.5,1.001,h,1.001,0);setC(buf.fogC,nf,.2*v,.23*v,.3*v);nf++;continue}
-  if(open){let cr=1,cg=1,cb=1;if(x>20000){cr=1.15;cg=1.1;cb=1}for(const h of hv){const dx=x-h.x,dy=y-h.y,dd=dx*dx+dy*dy,R=(h.r+2.5)*(h.r+2.5);if(dd<R){const f=1-dd/R;cr=1+f*.4;cg=1-f*.6;cb=1+f*.2}}
+  if(open){let cr=1,cg=1,cb=1;if(x>20000){cr=1.15;cg=1.1;cb=1}else if(inSafe(x,y)){cr=.75;cg=1.25;cb=1.2}for(const h of hv){const dx=x-h.x,dy=y-h.y,dd=dx*dx+dy*dy,R=(h.r+2.5)*(h.r+2.5);if(dd<R){const f=1-dd/R;cr=1+f*.4;cg=1-f*.6;cb=1+f*.2}}
    setM(buf.flr,nl,x+.5,0,y+.5,1,1,1,0);setC(buf.flrC,nl,cr,cg,cb);nl++;continue}
   const t=matAt(x,y),M0=MAT[t],m=mods.get(k),fr=m?Math.max(0,m.h/m.m):1,dim=.5+.5*fr,v=.9+h2(x,y,23)*.2;
   if(M0.g!==undefined&&nc[M0.g]<3000){const g=M0.g;setM(buf.ore[g],nc[g],x+.5,.55,y+.5,.985,1.1,.985,((h2(x,y,24)*4)|0)*Math.PI/2);setC(buf.oreC[g],nc[g],dim,dim,dim);nc[g]++}
@@ -535,7 +535,10 @@ function tryDrill(x,y){if(M.cd>0||MAT[matAt(x,y)].unbreak)return;M.cd=1/M.rate;M
 function firstSolid(ang,reach){const c=Math.cos(ang),s=Math.sin(ang);for(let d=.2;d<=reach;d+=.1){const x=Math.floor(P.x+c*d),y=Math.floor(P.y+s*d);if(!isOpen(x,y))return[x,y]}return null}
 
 /* ---------------- MOVEMENT ---------------- */
-function moveBody(b,dx,dy){let hit=null;const r=b.r;
+// Safe zone: the spawn pocket. Enemies and their acid can't enter; the player can't shoot from inside.
+const inSafe=(x,y)=>x>=-2&&x<=1&&y>=-2&&y<=1;
+const pSafe=()=>G.where==='mine'&&inSafe(Math.floor(P.x),Math.floor(P.y));
+function moveBody(b,dx,dy){let hit=null;const r=b.r;const isOpen=b===P?window.isOpen:(x,y)=>window.isOpen(x,y)&&!inSafe(x,y);
  if(dx){let nx=b.x+dx;const y0=Math.floor(b.y-r+1e-4),y1=Math.floor(b.y+r-1e-4),cx=Math.floor(dx>0?nx+r:nx-r);for(let y=y0;y<=y1;y++)if(!isOpen(cx,y)){nx=dx>0?cx-r-1e-3:cx+1+r+1e-3;hit={x:cx,y,ax:0};break}b.x=nx}
  if(dy){let ny=b.y+dy;const x0=Math.floor(b.x-r+1e-4),x1=Math.floor(b.x+r-1e-4),cy=Math.floor(dy>0?ny+r:ny-r);for(let x=x0;x<=x1;x++)if(!isOpen(x,cy)){ny=dy>0?cy-r-1e-3:cy+1+r+1e-3;const h={x,y:cy,ax:1};if(!hit||Math.abs(dy)>Math.abs(dx))hit=h;break}b.y=ny}
  return hit}
@@ -633,7 +636,7 @@ function pickup(item){G.loot=(G.loot||0)+1;const nm=HBW.rarityName(item)+' '+HBW
   G.store.scrap=(G.store.scrap||0)+wv;if(worst!==item){W.inv.splice(W.inv.indexOf(worst),1);W.inv.push(item);item._new=1;W.nw++}popText(P.x,P.y,'ARMORY FULL · +'+wv+' SCRAP','#e3a53a');return}
  item._new=1;W.inv.push(item);W.nw++;popText(P.x,P.y+.4,nm,col,item.unique||item.rarity>=3);
  if(item.unique||item.rarity>=4)toast((item.unique?'★ ':'')+nm.toUpperCase())}
-function hurtPlayer(d){if(P.inv>0||G.where==='base')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL INTERRUPTED')}P.hp-=d;P.hurtT=0;P.inv=.25;G.shake=Math.max(G.shake,.12);$('hurt').style.opacity=.8;setTimeout(()=>$('hurt').style.opacity=0,120);if(P.hp<=0)die()}
+function hurtPlayer(d){if(P.inv>0||G.where==='base'||pSafe())return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL INTERRUPTED')}P.hp-=d;P.hurtT=0;P.inv=.25;G.shake=Math.max(G.shake,.12);$('hurt').style.opacity=.8;setTimeout(()=>$('hurt').style.opacity=0,120);if(P.hp<=0)die()}
 
 /* ---------------- ENEMY SPAWN / AI ---------------- */
 function newSquad(h,raid){return{h,members:[],state:raid?'hunt':'muster',side:rnd()<.5?-1:1,raid:!!raid,size:3+h.tier}}
@@ -660,13 +663,14 @@ function hiveTick(dt){const cx0=Math.floor(P.x/CH),cy0=Math.floor(P.y/CH),near=n
   else{if(d<26)h.lastNear=G.t;if(G.t-h.deadAt>40&&G.t-h.lastNear>15&&d>26){h.alive=true;h.tier++;h.regrows++;setHiveHP(h);h.count=0;h.squad=null;h.waveCD=60;G.blockDirty=true;toast('A HIVE GREW BACK · TIER '+h.tier);if(d<75)launchRaid(h)}}}
  for(const h of activeHives)if(!act.includes(h)){if(h.mesh){h.mesh.dispose();h.mesh=null}if(h.bar){h.bar.dispose();h.bar=null}}
  activeHives=act}
-function updateEnemies(dt){
+function calmEnemies(){for(const e of enemies){if(e.sq)e.sq.state='muster';e.ret=false}for(const a of acids)APool.put(a.mesh);acids=[];for(const h of knownHives)h.waveCD=Math.max(h.waveCD,45)}
+function updateEnemies(dt){const PS=pSafe();if(PS){G.safeT=(G.safeT||0)+dt;if(G.safeT>4&&!G.calmed){G.calmed=true;calmEnemies()}}else{G.safeT=0;G.calmed=false}
  for(const e of enemies){if(e.dead)continue;const D=ET[e.type],dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy),sq=e.sq;
   e.cd-=dt;if(e.flash>0)e.flash-=dt;
   {let dot=0;if(e.burnT>0){e.burnT-=dt;dot+=e.burnD}else e.burnD=0;if(e.poison>0){dot+=e.poison;e.poison-=e.poison*.15*dt;if(e.poison<.05)e.poison=0}
    if(dot){e.hp-=dot*dt;e.dotA=(e.dotA||0)+dot*dt;e.dotT=(e.dotT||0)-dt;if(e.dotT<=0){e.dotT=.5;popText(e.x,e.y,fmtN(e.dotA),e.poison?ELC[4]:ELC[1]);e.dotA=0}if(e.hp<=0){killEnemy(e);continue}}
    if(e.slowT>0)e.slowT-=dt}
-  const canSee=d<D.see&&(D.fly||los(e.x,e.y,P.x,P.y));if(canSee&&sq&&sq.state!=='hunt'){sq.state='hunt'}
+  const canSee=!PS&&d<D.see&&(D.fly||los(e.x,e.y,P.x,P.y));if(canSee&&sq&&sq.state!=='hunt'){sq.state='hunt'}
   if(!e.ret&&!e.retDone&&e.type!=='brute'&&e.type!=='queen'&&e.hp<e.max*.3&&e.hive&&e.hive.alive){e.ret=true;e.retDone=true}
   let mx=0,my=0,dig=false;
   if(e.ret){const hx=e.hive.x+.5-e.x,hy=e.hive.y+.5-e.y,hd=Math.hypot(hx,hy);if(hd<1.2||!e.hive.alive){e.hp=Math.min(e.max,e.hp+e.max*.4*dt);if(e.hp>=e.max*.9||!e.hive.alive)e.ret=false}else{mx=hx/hd;my=hy/hd}}
@@ -679,7 +683,7 @@ function updateEnemies(dt){
    if(D.summon){e.sumT-=dt;if(e.sumT<=0&&enemies.length<70){e.sumT=6;for(let i=0;i<2;i++)spawnEnemy('stalker',e.hive,sq,e.x+(rnd()-.5),e.y+(rnd()-.5))}}}
   const ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml}
   {const sp=e.spd*(e.slowT>0?e.slowF:1);e.vx+=(mx*sp-e.vx)*Math.min(1,dt*8);e.vy+=(my*sp-e.vy)*Math.min(1,dt*8)}
-  if(D.fly){e.x+=e.vx*dt;e.y+=e.vy*dt}else{const hit=moveBody(e,e.vx*dt,e.vy*dt);if(hit&&(dig||e.type==='brute')&&sq&&sq.state==='hunt'){e.digT-=dt;if(e.digT<=0){e.digT=.45;damageBlock(hit.x,hit.y,D.dig*threat(e.x,e.y)*1.4,'enemy');burst(hit.x+.5,.5,hit.y+.5,3,[.7,.6,.5],[.4,.3,.2],1.5)}}}}
+  if(D.fly){const nx=e.x+e.vx*dt,ny=e.y+e.vy*dt;if(!inSafe(Math.floor(nx),Math.floor(ny))){e.x=nx;e.y=ny}}else{const hit=moveBody(e,e.vx*dt,e.vy*dt);if(hit&&(dig||e.type==='brute')&&sq&&sq.state==='hunt'){e.digT-=dt;if(e.digT<=0){e.digT=.45;damageBlock(hit.x,hit.y,D.dig*threat(e.x,e.y)*1.4,'enemy');burst(hit.x+.5,.5,hit.y+.5,3,[.7,.6,.5],[.4,.3,.2],1.5)}}}}
  // Spatial buckets limit separation checks to nearby enemies; AI and movement rules are unchanged.
  const sepSize=2.4,sepGrid=new Map();
  for(let i=0;i<enemies.length;i++){const e=enemies[i];if(e.dead)continue;const gx=Math.floor(e.x/sepSize),gy=Math.floor(e.y/sepSize),key=gx+','+gy;let cell=sepGrid.get(key);if(!cell)sepGrid.set(key,cell=[]);cell.push({e,i})}
@@ -721,10 +725,10 @@ function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(d
  // aim / fire / drill
  let tgt=null;if(!aiming&&G.auto){tgt=nearestTarget(gunRange());if(tgt)aimAng=Math.atan2(tgt.y-P.y,tgt.x-P.x)}
  if(aiming||tgt)P.ang=aimAng;else if(ml>.2)P.ang=Math.atan2(my,mx);
- fireGuns(dt,!atBase&&(aiming||!!tgt),tgt);
+ fireGuns(dt,!atBase&&!pSafe()&&(aiming||!!tgt),tgt);
  if(aiming){const s=firstSolid(P.ang,M.reach);if(s)tryDrill(s[0],s[1])}
  // cell change
- const cell=Math.floor(P.x)+','+Math.floor(P.y);if(cell!==G.lastCell){G.lastCell=cell;reveal();G.blockDirty=true;G.flowDirty=true;if(!atBase)G.maxDist=Math.max(G.maxDist,Math.hypot(P.x,P.y))}
+ const cell=Math.floor(P.x)+','+Math.floor(P.y);if(cell!==G.lastCell){if(!atBase){const s=pSafe();if(s!==G.wasSafe){G.wasSafe=s;toast(s?'SAFE ZONE · WEAPONS LOCKED':'LEAVING SAFE ZONE')}}G.lastCell=cell;reveal();G.blockDirty=true;G.flowDirty=true;if(!atBase)G.maxDist=Math.max(G.maxDist,Math.hypot(P.x,P.y))}
  G.flowT-=dt;if(G.flowDirty&&G.flowT<=0){buildFlow();G.flowDirty=false;G.flowT=.3}
  if(!atBase){G.hiveT-=dt;if(G.hiveT<=0){hiveTick(.25-G.hiveT);G.hiveT=.25}}
  if(!atBase){updateEnemies(dt);updateHives(dt)}updateBullets(dt);updateLoot(dt);
@@ -759,7 +763,7 @@ function updateBullets(dt){
    if(!dead)for(const h of activeHives){if(h.alive&&Math.hypot(h.x+.5-b.x,h.y+.5-b.y)<.9){hitHive(h,b.dmg,b.crit);if(b.aoe>0)blast(b.x,b.y,b.aoe,b.dmg,null);dead=true;break}}}
   if(dead){BPools[b.pool].put(b.mesh);bullets.splice(i,1);continue}b.mesh.position.set(b.x,.62,b.y);b.mesh.rotation.y=Math.atan2(b.vx,b.vy)}
  for(let i=meteors.length-1;i>=0;i--){const m=meteors[i];m.t-=dt;if(m.t<=0){blast(m.x,m.y,m.r,m.dmg,null);G.shake=.25;meteors.splice(i,1)}}
- for(let i=acids.length-1;i>=0;i--){const a=acids[i];a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;let dead=a.life<=0||!isOpen(Math.floor(a.x),Math.floor(a.y));
+ for(let i=acids.length-1;i>=0;i--){const a=acids[i];a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;let dead=a.life<=0||!isOpen(Math.floor(a.x),Math.floor(a.y))||inSafe(Math.floor(a.x),Math.floor(a.y));
   if(!dead&&Math.hypot(a.x-P.x,a.y-P.y)<P.r+.12){hurtPlayer(a.dmg);burst(a.x,.6,a.y,8,[.5,1,.2],[.2,.5,.1],2);dead=true}
   if(dead){APool.put(a.mesh);acids.splice(i,1);continue}a.mesh.position.set(a.x,.6,a.y);a.mesh.isVisible=revealed.has(K(Math.floor(a.x),Math.floor(a.y)))}}
 
@@ -889,7 +893,7 @@ function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const
 function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=G.recallMax=3/(1+.6*((G.base&&G.base.beacon)||0));$('recallBar').style.display='block'}
 function goBase(){G.recall=0;$('recallBar').style.display='none';G.mineX=P.x;G.mineY=P.y;for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
  setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;P.hp=P.max;placeCamera();G.lastCell=null;G.blockDirty=true;burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('BASE · CARGO '+Math.floor(cargoW())+'/'+M.cap);saveGame()}
-function deploy(){show('ovBase',false);openMach=null;nearM=null;$('actBtn').style.display='none';G.state='play';setWhere('mine');P.x=G.mineX;P.y=G.mineY;P.vx=P.vy=0;placeCamera();G.lastCell=null;G.blockDirty=true;G.flowDirty=true;reveal();burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('DEPLOYED');saveGame()}
+function deploy(){show('ovBase',false);openMach=null;nearM=null;$('actBtn').style.display='none';G.state='play';setWhere('mine');P.x=0;P.y=0;P.vx=P.vy=0;G.wasSafe=true;placeCamera();G.lastCell=null;G.blockDirty=true;G.flowDirty=true;reveal();burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('DEPLOYED');saveGame()}
 function bAt(x,y){return G.base.b[x+','+y]}
 function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
 const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
@@ -1027,8 +1031,8 @@ function renderBase(){if(!openMach)return;const body=$('bpBody'),S=G.store;const
    row.innerHTML=`<div><b style="color:#b48cff">⬚ BASE EXPANSION ${BS.lvl+1}</b><small>Room grows from ${D.hw*2+1}×${D.hh*2+1} to ${(D.hw+3)*2+1}×${(D.hh+2)*2+1} tiles.</small><small style="color:${okP?'#6fcf6a':'#d8503a'}">Needs Prestige ${E.pl} (you have P${G.pl})${lk?' · 🔒 '+lk:''}</small><small>${costTxtC(E.c)}</small></div>`;
    row.appendChild(btn('EXPAND',()=>{if(!okP||!hasC(E.c))return;payC(E.c);BS.lvl++;setWhere('base');G.blockDirty=true;rebuild();toast('BASE EXPANDED')},'#b48cff',!okP||!hasC(E.c)));body.appendChild(row)}
   else body.insertAdjacentHTML('beforeend','<p>Base fully expanded.</p>')}
- if(openMach==='pad'){body.insertAdjacentHTML('beforeend',`<p>Return to the mine where you recalled. Cargo ${Math.floor(cargoW())}/${M.cap}.</p>`);
-  body.appendChild(btn('⇪ DEPLOY TO MINE',deploy,'#4fd0d8'));const pr=document.createElement('div');pr.id='prestRow';pr.style.marginTop='10px';body.appendChild(pr);renderPrestige()}}
+ if(openMach==='pad'){body.insertAdjacentHTML('beforeend',`<p>Deploy to the mine entrance, a safe zone enemies cannot enter. Cargo ${Math.floor(cargoW())}/${M.cap}.</p>`);
+  body.appendChild(btn('⇪ DEPLOY TO MINE ENTRANCE',deploy,'#4fd0d8'));const pr=document.createElement('div');pr.id='prestRow';pr.style.marginTop='10px';body.appendChild(pr);renderPrestige()}}
 /* ---------------- SOUND: hives fester behind the rock ---------------- */
 const SND={ctx:null,on:(()=>{try{return localStorage.getItem('hb_snd')!=='0'}catch(e){return true}})(),master:null,hive:null};
 function audioInit(){if(SND.ctx)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=SND.ctx=new C();SND.master=c.createGain();SND.master.gain.value=SND.on?.9:0;SND.master.connect(c.destination);
@@ -1123,7 +1127,8 @@ function pause(){if(G.state!=='play')return;G.state='pause';saveGame();$('pauseS
 function die(){if(G.state==='dead')return;G.state='dead';burst(P.x,.6,P.y,60,[.3,.9,1],[1,.5,.2],5);let best={};try{best=JSON.parse(localStorage.getItem('hivebreaker_best')||'{}')}catch(e){}
  const nb={dist:Math.max(best.dist||0,Math.round(G.maxDist)),kills:Math.max(best.kills||0,G.kills),hives:Math.max(best.hives||0,G.hives),pl:Math.max(best.pl||0,G.pl),time:Math.max(best.time||0,Math.floor(G.t))};try{localStorage.setItem('hivebreaker_best',JSON.stringify(nb))}catch(e){}
  G.recall=0;$('recallBar').style.display='none';const kept={};for(const k in G.cargo){const v=Math.floor(G.cargo[k]*SALVAGE);if(v)kept[k]=v}const lw=Math.floor(cargoW());$('deadStats').innerHTML=statsHTML()+`<span>Cargo lost</span><b style="color:#d8503a">${lw}</b><span>Salvaged</span><b style="color:#e3a53a">10%</b>`;
- setTimeout(()=>{newWorld(0,kept);G.state='dead';show('ovDead',true)},700)}
+ setTimeout(()=>{G.cargo=kept;P.hp=P.max;P.inv=0;calmEnemies();for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
+  setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;placeCamera();G.lastCell=null;G.blockDirty=true;saveGame();G.state='dead';show('ovDead',true)},700)}
 function showBest(){const sv=hasSave(),bc=$('bCont');bc.style.display=sv?'':'none';$('bStart').textContent=sv?'NEW RUN':'START RUN';$('bStart').dataset.arm='';if(sv){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));bc.textContent='CONTINUE · P'+(s.g.pl||0)+' · '+fmtT(s.g.t)}catch(e){}}
 let b=null;try{b=JSON.parse(localStorage.getItem('hivebreaker_best')||'null')}catch(e){}$('best').textContent=b?`BEST · P${b.pl||0} · ${b.dist}m · ${b.kills} kills · ${b.hives} hives · ${fmtT(b.time)}`:''}
 function startRun(){resetState();setWhere('mine');syncBuildings();G.pl=0;clearSave();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
@@ -1132,13 +1137,13 @@ function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.
  $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
  if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
-function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};// keep the mining screen clean: settings live in the pause menu, rarely-used stats are in pause/death stats
+function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('BASE · DEPLOY PAD RETURNS YOU TO THE MINE ENTRANCE')};// keep the mining screen clean: settings live in the pause menu, rarely-used stats are in pause/death stats
  for(const id of['bAuto','bZoom','bGfx','bFs','bSnd']){$('pauseOpts').appendChild($(id));$(id).className=$(id).className.replace(/\bgo\b|\bdk\b/g,'').trim()||'pb';if(!$(id).classList.contains('pb'))$(id).classList.add('pb')}
  for(const id of['killT','hiveT','timeT'])$(id).parentElement.style.display='none';
  $('bShop').onclick=startRecall;$('bMap').onclick=()=>{const m=$('mm');m.classList.toggle('on');$('bMap').classList.toggle('on',m.classList.contains('on'));if(m.classList.contains('on'))drawMinimap()};$('bBuild').onclick=()=>{if(G.state!=='play')return;endPlace();openMach='build';G.state='base';renderBase();show('ovBase',true)};$('bPlaceOk').onclick=confirmPlace;$('bPlaceX').onclick=endPlace;$('actBtn').onclick=()=>openMachine(nearM);$('bBaseX').onclick=closeBase;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{const Z=[1.3,1.8,2.4];G.zoom=Z[(Z.findIndex(z=>z>=G.zoom-.01)+1)%Z.length];try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){};G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
- $('bSnd').onclick=()=>{audioInit();setSound(!SND.on)};setSound(SND.on);addEventListener('pointerdown',audioInit,{once:true});$('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
+ $('bSnd').onclick=()=>{audioInit();setSound(!SND.on)};setSound(SND.on);addEventListener('pointerdown',audioInit,{once:true});$('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').style.display='none';
  $('bSaveQ').onclick=()=>{saveGame();show('ovPause',false);G.state='title';showBest();show('ovTitle',true)};
  $('bCont').onclick=()=>{goFull();if(!loadGame())toast('SAVE NOT FOUND')};
  for(const id of['bMap','actBtn','bShop','bBuild','bPlaceOk','bPlaceX','bArm','bAuto','bZoom','bGfx','bFs','bPause'])$(id).addEventListener('pointerdown',e=>e.stopPropagation())}
