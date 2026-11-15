@@ -148,7 +148,8 @@ Rig upgrades, building marks, base upgrades and expansion keep the same tree and
    Original scope: item registry, recipe table, machine table, save migration. MK becomes throughput-only. Furnace replaces Smelter (same chain behavior).
 2. ✅ **Power grid (done 2026-11-15):** Coal Generator (12 power at MK1, +50% per mark, 15 s per coal, 1 ash per 3 coal, burns only on demand, takes coal from touching buildings or any storage on its grid); grids are connected chains including the Vault and boxes; Crusher draws 4 and slows proportionally when short; Furnace burns coal (or scrap) as fuel; base HUD shows ⚡ supply/demand.
    Original scope: coal ore in the world, Coal Generator, grid by adjacency, power HUD, under-power slowdown.
-3. **Multi-machine chains and byproducts:** Washer, Settling Tank, Steel Mill, Electric Smelter, Assembler, Incinerator; slag/ash/sludge handling.
+3. ✅ **Chains and byproducts (done 2026-11-15):** Washer (+ash variant, sludge), Settling Tank, Steel Mill, Electric Smelter, Assembler, Incinerator; gold now needs Crusher → Washer → Furnace; silicon → wafer → circuit; furnace makes 1 slag per 3 smelts; slag crushes into gravel, which base expansion now needs; sludge cannot be stored and clogs washers without a tank; machines unlock from what you have built.
+   Original scope: Washer, Settling Tank, Steel Mill, Electric Smelter, Assembler, Incinerator; slag/ash/sludge handling.
 4. **Nuclear and rare:** uranium ore, Centrifuge, Rod Fabricator, Reactor, Waste Vault, Plasma Refinery, Battery Bank.
 5. **Re-tier spending and balance:** swap Forge/mark/expansion costs to the new tier materials; tune rates.
 
