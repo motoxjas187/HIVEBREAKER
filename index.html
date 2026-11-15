@@ -158,7 +158,7 @@ function isOpen(x,y){return dug.has(K(x,y))||baseOpen(x,y)}
 function blockHP(x,y){const m=mods.get(K(x,y));return m?Math.ceil(m.h):maxHP(x,y,matAt(x,y))}
 
 /* ---------------- STATE ---------------- */
-const G={state:'title',t:0,vision:7,auto:true,gfx:'balanced',zoom:1,blockDirty:true,flowT:0,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,pl:0,rebuildCD:0,hudT:0,mmT:0,hiveT:0,shake:0};
+const G={state:'title',t:0,vision:7,auto:true,gfx:'balanced',zoom:(()=>{try{return +localStorage.getItem('hb_zoom')||1.8}catch(e){return 1.8}})(),blockDirty:true,flowT:0,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,pl:0,rebuildCD:0,hudT:0,mmT:0,hiveT:0,shake:0};
 const M={dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cd:0,beamT:0,bx:0,by:0};
 let W,P,enemies,bullets,acids,orbs,knownHives,activeHives,drones,loots,meteors;
 const enemyPools={};
@@ -199,7 +199,7 @@ function threat(x,y){return(1+Math.hypot(x,y)/28)*(1+G.t/500)*(1+.4*(G.pl||0))}
 
 /* ---------------- BOOT / SCENE ---------------- */
 let blockM,fogM,floorM,crysM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
-const MAXI=2600;const buf={blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),cry:[0,1,2,3].map(()=>new Float32Array(800*16))};
+const MAXI=6000;const buf={blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),cry:[0,1,2,3].map(()=>new Float32Array(800*16))};
 class Pool{constructor(src){this.src=src;this.free=[];this.n=0}get(){let m=this.free.pop();if(!m)m=this.src.createInstance('i'+(this.n++));m.setEnabled(true);return m}put(m){m.setEnabled(false);this.free.push(m)}}
 function dyn(name,size,draw){const t=new B.DynamicTexture(name,{width:size,height:size},scene,true);const ctx=t.getContext();draw(ctx,size);t.update();return t}
 function noiseTex(name,size,base,var1,edge){return dyn(name,size,(g,S)=>{const im=g.createImageData(S,S);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const i=(y*S+x)*4;let v=base+(rnd()-.5)*var1+(vn(x*.06,y*.06,77)-.5)*var1*1.6;if(edge){const e=Math.min(x,y,S-1-x,S-1-y);if(e<edge)v*=.55+.45*e/edge;if(e<2)v*=1.35}v=clamp(v,0,255);im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}g.putImageData(im,0,0)})}
@@ -408,7 +408,7 @@ function setupInput(){const tz=$('touch'),kM=$('kMove'),kA=$('kAim');
  tz.addEventListener('pointerup',up);tz.addEventListener('pointercancel',up);
  addEventListener('keydown',e=>{IN.keys[e.key.toLowerCase()]=true;if(e.key===' ')IN.keys.space=true;if(e.key==='Escape'&&G.state==='play')pause()});
  addEventListener('keyup',e=>{IN.keys[e.key.toLowerCase()]=false;if(e.key===' ')IN.keys.space=false});
- addEventListener('wheel',e=>{G.zoom=clamp(G.zoom+(e.deltaY>0?.1:-.1),.7,1.5);G.blockDirty=true},{passive:true});
+ addEventListener('wheel',e=>{G.zoom=clamp(G.zoom+(e.deltaY>0?.1:-.1),1,2.6);G.blockDirty=true;try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){}},{passive:true});
  addEventListener('pagehide',()=>saveGame());
  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause();saveGame()}else if(engine&&!window.__NULL){engine.resize()}})}
 function mouseGround(){const r=scene.createPickingRay(IN.mouse.x*(engine.getRenderWidth()/innerWidth),IN.mouse.y*(engine.getRenderHeight()/innerHeight),B.Matrix.Identity(),camera);if(Math.abs(r.direction.y)<1e-4)return null;const t=-(r.origin.y-.5)/r.direction.y;return[r.origin.x+r.direction.x*t,r.origin.z+r.direction.z*t]}
@@ -643,7 +643,8 @@ function newWorld(plUp,ore){const keep={mu:MU.map(u=>u.lvl),w:W,loot:G.loot,max:
 let camX=0,camY=0;function placeCamera(){camX=P?P.x:0;camY=P?P.y:0}
 function updateCamera(dt){if(!P)return;camX+=(P.x-camX)*Math.min(1,dt*6);camY+=(P.y-camY)*Math.min(1,dt*6);let sx=0,sy=0;if(G.shake>0){G.shake-=dt;sx=(rnd()-.5)*G.shake;sy=(rnd()-.5)*G.shake}
  const z=G.zoom;camera.position.set(camX+sx,12.5*z,camY-6.3*z+sy);camera.setTarget(new B.Vector3(camX+sx,0,camY+.8+sy));
- dirLight.position.set(camX+14,30,camY-10)}
+ const o=26*Math.max(1,z);if(dirLight.orthoRight!==o){dirLight.orthoLeft=dirLight.orthoBottom=-o;dirLight.orthoRight=dirLight.orthoTop=o;dirLight.shadowMaxZ=70*Math.max(1,z)}
+ dirLight.position.set(camX+14*z,30*z,camY-10*z)}
 
 /* ---------------- UI ---------------- */
 function fmtT(t){t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
@@ -725,7 +726,7 @@ function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.
  if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
 function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=openShop;$('bArm').onclick=openArmory;$('bArmX').onclick=closeArmory;$('bAutoFuse').onclick=()=>{const n=autoFuse();sel=[];renderArmory();toast(n?'AUTO-FUSED '+n+'×':'NOTHING TO FUSE')};$('bSalvC').onclick=()=>{const v=salvage(W.inv.filter(i=>i.rarity===0&&!i.unique));renderArmory();toast('SALVAGED · +'+fmtN(v)+' ORE')};$('bShopX').onclick=()=>{show('ovShop',false);G.state='play';hud()};
- $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{G.zoom=G.zoom>=1.4?.75:+(G.zoom+.325).toFixed(3);G.blockDirty=true;if(G.state!=='play')rebuild()};
+ $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{const Z=[1.3,1.8,2.4];G.zoom=Z[(Z.findIndex(z=>z>=G.zoom-.01)+1)%Z.length];try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){};G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
  $('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
  $('bSaveQ').onclick=()=>{saveGame();show('ovPause',false);G.state='title';showBest();show('ovTitle',true)};
