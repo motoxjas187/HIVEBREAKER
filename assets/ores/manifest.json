@@ -1,6 +1,6 @@
 {
   "pack": "HIVEBREAKER Abyssal Ore Blocks",
-  "version": "1.0",
+  "version": "1.1",
   "dimensions": "approximately 1 x 1 x 1 units; centered at origin",
   "format": "glTF Binary (.glb)",
   "assets": [
@@ -69,6 +69,102 @@
       "label": "Rod",
       "category": "manufactured rod",
       "file": "rod_ore_block.glb"
+    },
+    {
+      "id": "diamond",
+      "label": "Diamond",
+      "category": "raw ore",
+      "file": "diamond_ore_block.glb"
+    },
+    {
+      "id": "gold",
+      "label": "Gold",
+      "category": "raw ore",
+      "file": "gold_ore_block.glb"
+    },
+    {
+      "id": "core",
+      "label": "Core",
+      "category": "raw ore",
+      "file": "core_ore_block.glb"
+    },
+    {
+      "id": "iron_plate",
+      "label": "Iron Plate",
+      "category": "product",
+      "file": "iron_plate_ore_block.glb"
+    },
+    {
+      "id": "gold_bar",
+      "label": "Gold Bar",
+      "category": "product",
+      "file": "gold_bar_ore_block.glb"
+    },
+    {
+      "id": "silicon_wafer",
+      "label": "Silicon Wafer",
+      "category": "product",
+      "file": "silicon_wafer_ore_block.glb"
+    },
+    {
+      "id": "cut_diamond",
+      "label": "Cut Diamond",
+      "category": "product",
+      "file": "cut_diamond_ore_block.glb"
+    },
+    {
+      "id": "core_ingot",
+      "label": "Core Ingot",
+      "category": "product",
+      "file": "core_ingot_ore_block.glb"
+    },
+    {
+      "id": "slag",
+      "label": "Slag",
+      "category": "byproduct",
+      "file": "slag_ore_block.glb"
+    },
+    {
+      "id": "ash",
+      "label": "Ash",
+      "category": "byproduct",
+      "file": "ash_ore_block.glb"
+    },
+    {
+      "id": "sludge",
+      "label": "Sludge",
+      "category": "byproduct",
+      "file": "sludge_ore_block.glb"
+    },
+    {
+      "id": "depleted_uranium",
+      "label": "Depleted Uranium",
+      "category": "byproduct",
+      "file": "depleted_uranium_ore_block.glb"
+    },
+    {
+      "id": "nuclear_waste",
+      "label": "Nuclear Waste",
+      "category": "byproduct",
+      "file": "nuclear_waste_ore_block.glb"
+    },
+    {
+      "id": "obsidian",
+      "label": "Obsidian",
+      "category": "world block",
+      "file": "obsidian_ore_block.glb"
+    },
+    {
+      "id": "scrap",
+      "label": "Scrap",
+      "category": "world block",
+      "file": "scrap_ore_block.glb"
+    },
+    {
+      "id": "hive_chitin",
+      "label": "Hive Chitin",
+      "category": "world block",
+      "file": "hive_chitin_ore_block.glb"
     }
   ]
 }
