@@ -80,8 +80,8 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 </div></div>
 <div class="ov" id="ovLevel"><div><h2 id="lvH">WEAPON UPGRADE</h2><p>Pick one</p><div class="cards" id="cards"></div></div></div>
 <div class="ov" id="ovShop"><div><h2>MINING RIG</h2><p>Ore: <b id="shopOre" style="color:var(--am)">0</b></p><div id="shopRows"></div><div id="prestRow"></div><button class="go" id="bShopX">BACK</button></div></div>
-<div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">END RUN</button></div></div>
-<div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><div class="kv" id="deadStats"></div><button class="go" id="bAgain">NEW RUN</button></div></div>
+<div class="ov" id="ovPause"><div><h2>PAUSED</h2><div class="kv" id="pauseStats"></div><button class="go" id="bResume">RESUME</button><button class="go dk" id="bSaveQ">SAVE &amp; QUIT</button><button class="go dk" id="bQuit">ABANDON WORLD</button></div></div>
+<div class="ov" id="ovDead"><div><h1>HULL <span>BREACHED</span></h1><p>The world is lost. You keep every rig and weapon upgrade, your level and prestige, and salvage 10% of your ore.</p><div class="kv" id="deadStats"></div><button class="go" id="bAgain">REDEPLOY</button></div></div>
 <div id="load">LOADING ENGINE…</div>
 
 <script>
@@ -573,10 +573,12 @@ function renderPrestige(){const need=prestReq(),ok=G.hives>=need,el=$('prestRow'
  el.innerHTML=`<div class="row" style="border-color:#5a3d8a"><div><b style="color:#b48cff">⟰ PRESTIGE ${G.pl+1}</b><small>New world. You keep every rig upgrade, weapon upgrade and your level. Rock starts ×${(2.2).toFixed(1)} tougher, enemies hit harder, ore +50%.</small><small style="color:${ok?'#6fcf6a':'#d8503a'}">Destroy ${need} hives this world · ${Math.min(G.hives,need)}/${need}</small></div></div>`;
  const b=document.createElement('button');b.className='pb';b.textContent=ok?'PRESTIGE':'LOCKED';b.disabled=!ok;b.style.borderColor='#b48cff';
  b.onclick=()=>{if(!ok)return;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='CONFIRM';return}doPrestige()};el.firstChild.appendChild(b)}
-function doPrestige(){const keep={mu:MU.map(u=>u.lvl),w:JSON.parse(JSON.stringify(W)),lvl:G.lvl,xp:G.xp,pend:G.pend,max:P.max,pl:G.pl+1,auto:G.auto};
+function doPrestige(){newWorld(1,0);toast('PRESTIGE '+G.pl+' · THE ROCK GREW HARDER')}
+const SALVAGE=.1;
+function newWorld(plUp,ore){const keep={mu:MU.map(u=>u.lvl),w:JSON.parse(JSON.stringify(W)),lvl:G.lvl,xp:G.xp,pend:G.pend,max:P.max,pl:G.pl+plUp,auto:G.auto};
  resetState();G.pl=keep.pl;G.auto=keep.auto;W=keep.w;G.lvl=keep.lvl;G.xp=keep.xp;G.pend=keep.pend;
  MU.forEach((u,i)=>{u.lvl=keep.mu[i];if(u.id!=='scan')u.f(u.lvl);else G.vision=7+u.lvl});P.max=keep.max;P.hp=P.max;for(let i=0;i<W.drones;i++)addDrone();
- show('ovShop',false);placeCamera();reveal();buildFlow();rebuild();G.state='play';hud();saveGame();toast('PRESTIGE '+G.pl+' · THE ROCK GREW HARDER')}
+ show('ovShop',false);placeCamera();reveal();buildFlow();rebuild();G.ore=ore;G.state='play';hud();saveGame()}
 
 /* ---------------- CAMERA ---------------- */
 let camX=0,camY=0;function placeCamera(){camX=P?P.x:0;camY=P?P.y:0}
@@ -608,9 +610,10 @@ function renderShop(){renderPrestige();$('shopOre').textContent=G.ore;const r=$(
  b.onclick=()=>{if(G.ore<c||mx)return;G.ore-=c;u.lvl++;u.f(u.lvl);renderShop()};d.appendChild(b);r.appendChild(d)})}
 function statsHTML(){return[['Prestige','P'+G.pl],['Time',fmtT(G.t)],['Farthest',Math.round(G.maxDist)+'m'],['Kills',G.kills],['Hives',G.hives],['Blocks',G.mined],['Level',G.lvl]].map(q=>`<span>${q[0]}</span><b>${q[1]}</b>`).join('')}
 function pause(){if(G.state!=='play')return;G.state='pause';saveGame();$('pauseStats').innerHTML=statsHTML();show('ovPause',true)}
-function die(){G.state='dead';clearSave();burst(P.x,.6,P.y,60,[.3,.9,1],[1,.5,.2],5);let best={};try{best=JSON.parse(localStorage.getItem('hivebreaker_best')||'{}')}catch(e){}
+function die(){if(G.state==='dead')return;G.state='dead';burst(P.x,.6,P.y,60,[.3,.9,1],[1,.5,.2],5);let best={};try{best=JSON.parse(localStorage.getItem('hivebreaker_best')||'{}')}catch(e){}
  const nb={dist:Math.max(best.dist||0,Math.round(G.maxDist)),kills:Math.max(best.kills||0,G.kills),hives:Math.max(best.hives||0,G.hives),pl:Math.max(best.pl||0,G.pl),time:Math.max(best.time||0,Math.floor(G.t))};try{localStorage.setItem('hivebreaker_best',JSON.stringify(nb))}catch(e){}
- $('deadStats').innerHTML=statsHTML();setTimeout(()=>show('ovDead',true),700)}
+ const kept=Math.floor(G.ore*SALVAGE),lost=G.ore-kept;$('deadStats').innerHTML=statsHTML()+`<span>Ore lost</span><b style="color:#d8503a">${lost}</b><span>Ore salvaged</span><b style="color:#e3a53a">${kept}</b>`;
+ setTimeout(()=>{newWorld(0,kept);G.state='dead';show('ovDead',true)},700)}
 function showBest(){const sv=hasSave(),bc=$('bCont');bc.style.display=sv?'':'none';$('bStart').textContent=sv?'NEW RUN':'START RUN';$('bStart').dataset.arm='';if(sv){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));bc.textContent='CONTINUE · P'+(s.g.pl||0)+' · '+fmtT(s.g.t)}catch(e){}}
 let b=null;try{b=JSON.parse(localStorage.getItem('hivebreaker_best')||'null')}catch(e){}$('best').textContent=b?`BEST · P${b.pl||0} · ${b.dist}m · ${b.kills} kills · ${b.hives} hives · ${fmtT(b.time)}`:''}
 function startRun(){resetState();G.pl=0;clearSave();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
@@ -619,7 +622,7 @@ function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.
  $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
  if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
-function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>startRun();$('bShop').onclick=openShop;$('bShopX').onclick=()=>{show('ovShop',false);G.state='play';hud()};
+function setupUI(){$('bStart').onclick=()=>{if(hasSave()&&$('bStart').dataset.arm!=='1'){$('bStart').dataset.arm='1';$('bStart').textContent='TAP AGAIN · ERASES SAVE';return}$('bStart').dataset.arm='';goFull();startRun()};$('bAgain').onclick=()=>{show('ovDead',false);G.state='play';hud();toast('REDEPLOYED · NEW WORLD')};$('bShop').onclick=openShop;$('bShopX').onclick=()=>{show('ovShop',false);G.state='play';hud()};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{G.zoom=G.zoom>=1.4?.75:+(G.zoom+.325).toFixed(3);G.blockDirty=true;if(G.state!=='play')rebuild()};
  $('bGfx').onclick=()=>{G.gfx=G.gfx==='quality'?'performance':G.gfx==='performance'?'balanced':'quality';applyGfx()};$('bFs').onclick=goFull;$('bPause').onclick=pause;
  $('bResume').onclick=()=>{show('ovPause',false);G.state='play'};$('bQuit').onclick=()=>{show('ovPause',false);die()};
