@@ -649,7 +649,7 @@ function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(d
  for(const d of dnPool)if(d.on){d.t+=dt;if(d.t>.9){d.on=false;d.el.style.display='none'}}
  // player visuals
  player.position.set(P.x,animatePlayer(dt)||0,P.y);player.scaling.setAll(1.35);player.rotation.y=Math.PI/2-P.ang;
- pLight.position.set(P.x,2.4,P.y);spot.position.set(P.x,1.4,P.y);spot.direction.set(Math.cos(P.ang),-.32,Math.sin(P.ang));
+ if(G.where==='base')pLight.position.set(BX+.5,7,BY+.5);else pLight.position.set(P.x,2.4,P.y);spot.position.set(P.x,1.4,P.y);spot.direction.set(Math.cos(P.ang),-.32,Math.sin(P.ang));
  if(M.beamT>0){const ox=P.x+Math.cos(P.ang)*.45,oy=P.y+Math.sin(P.ang)*.45,dx=M.bx-ox,dy=M.by-oy,L=Math.hypot(dx,dy);beamM.setEnabled(true);beamM.position.set(ox+dx/2,.62,oy+dy/2);beamM.scaling.set(1+Math.sin(G.t*60)*.4,1,L);beamM.rotation.y=Math.atan2(dx,dy)}else beamM.setEnabled(false)}
 function updateBullets(dt){
  for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.life-=dt;let dead=b.life<=0;
@@ -716,8 +716,17 @@ function buildBase(){baseRoot=new B.TransformNode('base',scene);const vc=mats.vc
   if(mc.id==='pad'){p=[part('Cylinder',{height:.12,diameter:1.8,tessellation:24},[.25,.28,.32],[0,.06,0]),part('Cylinder',{height:.14,diameter:1.2,tessellation:24},[.16,.18,.2],[0,.08,0])];
    padRing=B.MeshBuilder.CreateTorus('padRing',{diameter:1.5,thickness:.06,tessellation:32},scene);padRing.position.y=.18;padRing.material=stdMat('padm',[0,0,0],[.3,.9,1]);put(padRing,mc)}
   const m=merge(p,'mach-'+mc.id,vc);m.position.y=0;put(m,mc)}
+ // glowing signs floating above each machine (always face the camera)
+ const signCol={store:'#e3a53a',smelt:'#ff8a3a',forge:'#ff5a3a',arm:'#b48cff',pad:'#4fd0d8'};
+ for(const mc of MACH){const t=new B.DynamicTexture('sign'+mc.id,{width:512,height:128},scene,true),g=t.getContext(),col=signCol[mc.id],txt={store:'STORAGE',smelt:'SMELTER',forge:'FORGE',arm:'ARMORY',pad:'DEPLOY'}[mc.id];
+  g.clearRect(0,0,512,128);g.fillStyle='rgba(8,12,16,.78)';g.beginPath();g.roundRect?g.roundRect(8,14,496,100,18):g.rect(8,14,496,100);g.fill();
+  g.lineWidth=5;g.strokeStyle=col;g.stroke();let fs=80;g.font='700 '+fs+'px "Barlow Condensed",sans-serif';while(g.measureText(txt).width>450&&fs>30){fs-=4;g.font='700 '+fs+'px "Barlow Condensed",sans-serif'}g.textAlign='center';g.textBaseline='middle';g.shadowColor=col;g.shadowBlur=18;g.fillStyle=col;g.fillText(txt,256,66);g.shadowBlur=0;g.fillStyle='#fff';g.globalAlpha=.55;g.fillText(txt,256,66);
+  t.hasAlpha=true;t.update();
+  const m=B.MeshBuilder.CreatePlane('signp'+mc.id,{width:3.4,height:.85},scene),mt=new B.StandardMaterial('signm'+mc.id,scene);
+  mt.diffuseTexture=t;mt.emissiveTexture=t;mt.useAlphaFromDiffuseTexture=true;mt.disableLighting=true;mt.backFaceCulling=false;m.material=mt;
+  m.billboardMode=B.Mesh.BILLBOARDMODE_ALL;m.position.set(mc.x+.5,mc.id==='pad'?1.5:2.7,mc.y+.5);m.parent=baseRoot;m.isPickable=false}
  baseRoot.setEnabled(false)}
-function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');$('bShop').style.display=w==='base'?'none':'';
+function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';
  if(w==='base'){for(let x=BX-8;x<=BX+8;x++)for(let y=BY-6;y<=BY+6;y++)revealed.add(K(x,y))}}
 function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=3;$('recallBar').style.display='block'}
 function goBase(){G.recall=0;$('recallBar').style.display='none';G.mineX=P.x;G.mineY=P.y;for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
