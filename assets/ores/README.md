@@ -35,4 +35,4 @@ Import the glTF loader in your project as required by its Babylon.js build.
 | circuit | Cut Diamond |
 | uranium | Core Ingot |
 
-Products fly from smelters to storage, and each Storage Box shows the last product it received on its lid. If the models fail to load, the game falls back to its built-in pixel textures.
+Products fly from smelters to storage, and each Storage Box shows the last product it received on its lid. `tools/pack_ore_models.py` packs the GLBs into `assets/ores/ore_models.js` for hosts that cannot serve .glb files (the game uses it first). If the models fail to load, the game falls back to its built-in pixel textures.
