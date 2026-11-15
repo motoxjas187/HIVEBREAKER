@@ -162,7 +162,9 @@ const G={state:'title',t:0,vision:7,auto:true,gfx:'balanced',zoom:(()=>{try{retu
 const M={dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cd:0,beamT:0,bx:0,by:0};
 let W,P,enemies,bullets,acids,orbs,knownHives,activeHives,drones,loots,meteors;
 const enemyPools={};
-function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=p=[];const m=p.pop();if(m){m.b.setEnabled(true);m.e.setEnabled(true);m.bar.setEnabled(true);return m}return{b:protos[type].b.createInstance('e'),e:protos[type].e.createInstance('ee'),bar:barProto.createInstance('eb')}}
+function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=p=[];const m=p.pop();if(m){m.b.setEnabled(true);m.e.setEnabled(true);m.bar.setEnabled(true);return m}const b=protos[type].b.createInstance('e');
+ const legs=(protos[type].legs||[]).map(L=>{const l=L.m.createInstance('el');l.parent=b;l.position.set(L.pivot[0],L.pivot[1],L.pivot[2]);l.L=L;return l});
+ return{b,e:protos[type].e.createInstance('ee'),bar:barProto.createInstance('eb'),legs}}
 function resetState(){SEED=(rnd()*1e9)|0;matCache.clear();hiveCache=new Map();dug=new Set();mods=new Map();revealed=new Set();
  Object.assign(G,{t:0,vision:7,blockDirty:true,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,shake:0,loot:0});
  Object.assign(M,{dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cd:0,beamT:0});
@@ -259,14 +261,12 @@ function buildProtos(){
  const vc=mats.vc;
  // stalker: crimson insectoid
  {const p=[],c=[.38,.08,.1],d=[.2,.04,.06];p.push(part('Sphere',{diameter:1,segments:8},c,[0,.38,-.08],null,[.5,.34,.75]));p.push(part('Sphere',{diameter:1,segments:8},d,[0,.42,.32],null,[.32,.26,.34]));
-  for(const s of[-1,1])for(let k=0;k<3;k++)p.push(part('Box',{width:.5,height:.05,depth:.05},d,[s*.3,.28,-.2+k*.2],[0,s*(k-1)*.35,s*.5]));
   for(const s of[-1,1])p.push(part('Cylinder',{height:.28,diameterTop:0,diameterBottom:.07,tessellation:5},[.85,.75,.6],[s*.09,.36,.52],[Math.PI/2.3,0,s*.3]));
-  protos.stalker={b:merge(p,'stalker',vc),e:eyes([[-.08,.48,.47],[.08,.48,.47]],[1,.15,.1],.07)}}
+  protos.stalker={b:merge(p,'stalker',vc),e:eyes([[-.08,.48,.47],[.08,.48,.47]],[1,.15,.1],.07),legs:insectLegs('stalker',3,.3,.28,.2,.5,.05,d)}}
  // spitter: green sac
  {const p=[];p.push(part('Sphere',{diameter:1,segments:10},[.15,.32,.1],[0,.45,-.18],null,[.55,.5,.6]));p.push(part('Sphere',{diameter:1,segments:8},[.12,.18,.1],[0,.35,.25],null,[.32,.28,.36]));
-  for(const s of[-1,1])for(let k=0;k<2;k++)p.push(part('Box',{width:.45,height:.05,depth:.05},[.08,.12,.06],[s*.26,.22,-.05+k*.22],[0,0,s*.55]));
   p.push(part('Cylinder',{height:.25,diameterTop:.08,diameterBottom:.16,tessellation:6},[.3,.55,.15],[0,.42,.48],[Math.PI/2,0,0]));
-  protos.spitter={b:merge(p,'spitter',vc),e:eyes([[-.1,.48,.36],[.1,.48,.36],[0,.72,-.1]],[.5,1,.2],.08)}}
+  protos.spitter={b:merge(p,'spitter',vc),e:eyes([[-.1,.48,.36],[.1,.48,.36],[0,.72,-.1]],[.5,1,.2],.08),legs:insectLegs('spitter',2,.26,.22,.22,.45,.05,[.08,.12,.06])}}
  // brute: armored hulk
  {const p=[],a=[.3,.26,.24],dk=[.16,.12,.12];
   p.push(part('Sphere',{diameter:1,segments:14},dk,[0,.48,-.02],null,[.52,.48,.54]));
@@ -274,22 +274,22 @@ function buildProtos(){
   p.push(part('Sphere',{diameter:1,segments:12},a,[0,.43,.39],null,[.38,.3,.3]));
   for(const s of[-1,1]){
    p.push(part('Sphere',{diameter:.42,segments:12},a,[s*.43,.72,-.02],null,[1,1,1]));
-   p.push(part('Cylinder',{height:.42,diameter:.2,tessellation:10},dk,[s*.48,.35,.12],[0,0,s*.08]));
-   p.push(part('Sphere',{diameter:.2,segments:10},[.8,.7,.55],[s*.48,.13,.18],null,[1,1,1]));
    p.push(part('Cylinder',{height:.34,diameterTop:0,diameterBottom:.13,tessellation:10},[.8,.7,.55],[s*.18,.86,.48],[Math.PI/2.4,0,s*.28]));
   }
-  protos.brute={b:merge(p,'brute',vc),e:eyes([[-.13,.54,.67],[.13,.54,.67]],[1,.55,.1],.09)}}
+  protos.brute={b:merge(p,'brute',vc),e:eyes([[-.13,.54,.67],[.13,.54,.67]],[1,.55,.1],.09),legs:[-1,1].map(s=>{const hp=[s*.48,.56,.12];return{m:merge([part('Cylinder',{height:.42,diameter:.2,tessellation:10},dk,[0,-.21,0],[0,0,s*.08]),part('Sphere',{diameter:.2,segments:10},[.8,.7,.55],[0,-.43,.06])],'bleg',vc),pivot:hp,kind:'swing',ph:s>0?Math.PI:0}})}}
  // flyer: wasp
  {const p=[];p.push(part('Sphere',{diameter:1,segments:8},[.35,.3,.08],[0,0,-.15],null,[.26,.22,.5]));p.push(part('Sphere',{diameter:.24,segments:6},[.15,.12,.05],[0,0,.18]));
-  for(const s of[-1,1])p.push(part('Box',{width:.7,height:.02,depth:.28},[.55,.6,.7],[s*.4,.08,0],[0,s*.2,0]));
-  protos.flyer={b:merge(p,'flyer',vc),e:eyes([[-.06,.04,.28],[.06,.04,.28]],[1,.9,.2],.06)}}
+  protos.flyer={b:merge(p,'flyer',vc),e:eyes([[-.06,.04,.28],[.06,.04,.28]],[1,.9,.2],.06),legs:[-1,1].map(s=>({m:merge([part('Box',{width:.7,height:.02,depth:.28},[.55,.6,.7],[s*.36,0,0],[0,s*.2,0])],'wing',vc),pivot:[s*.06,.08,0],kind:'wing',side:s}))}}
  // queen
  {const p=[];p.push(part('Sphere',{diameter:1,segments:12},[.32,.06,.3],[0,.55,-.5],null,[.9,.7,1.2]));p.push(part('Sphere',{diameter:1,segments:10},[.2,.04,.18],[0,.65,.35],null,[.6,.5,.6]));
   for(let k=0;k<5;k++){const a=(k-2)*.35;p.push(part('Cylinder',{height:.45,diameterTop:0,diameterBottom:.1,tessellation:5},[.85,.7,.9],[Math.sin(a)*.25,1.0,.35+Math.cos(a)*.02],[-.3,0,a]))}
-  for(const s of[-1,1])for(let k=0;k<3;k++)p.push(part('Box',{width:.8,height:.07,depth:.07},[.15,.03,.14],[s*.5,.3,-.1+k*.3],[0,s*(k-1)*.3,s*.5]));
-  protos.queen={b:merge(p,'queen',vc),e:eyes([[-.15,.78,.62],[.15,.78,.62],[0,.9,.6]],[1,.2,.9],.09)}}
- for(const k in protos){if(shadowGen){shadowGen.addShadowCaster(protos[k].b)}protos[k].b.isPickable=false;protos[k].e.isPickable=false}
+  protos.queen={b:merge(p,'queen',vc),e:eyes([[-.15,.78,.62],[.15,.78,.62],[0,.9,.6]],[1,.2,.9],.09),legs:insectLegs('queen',3,.5,.3,.3,.8,.07,[.15,.03,.14],-.1)}}
+ for(const k in protos){if(shadowGen){shadowGen.addShadowCaster(protos[k].b);for(const L of protos[k].legs||[])shadowGen.addShadowCaster(L.m)}protos[k].b.isPickable=false;protos[k].e.isPickable=false}
 }
+// Insect legs split into two alternating tripods (A/B) so each enemy can scuttle.
+function insectLegs(name,n,ox,y,gap,len,th,col,z0){z0=z0==null?(n===3?-.2:-.05):z0;const g=[[],[]];
+ for(const s of[-1,1])for(let k=0;k<n;k++){const grp=((k+(s>0?1:0))%2);g[grp].push(part('Box',{width:len,height:th,depth:th},col,[s*ox,y,z0+k*gap],[0,s*(k-(n-1)/2)*.35,s*.5]))}
+ return g.map((parts,i)=>({m:merge(parts,name+'leg'+i,mats.vc),pivot:[0,0,0],kind:'scuttle',ph:i?Math.PI:0}))}
 function eyes(list,col,sz){const p=list.map(q=>{const m=B.MeshBuilder.CreateSphere('e',{diameter:sz*2,segments:4},scene);m.position.set(q[0],q[1],q[2]);return m});const m=B.Mesh.MergeMeshes(p,true,true);m.material=stdMat('em'+col.join(),[0,0,0],col);m.position.y=-60;return m}
 function buildPlayer(){
  // Rounded humanoid mining exosuit: no tank chassis, tracks, or block-built silhouette.
@@ -336,9 +336,26 @@ function buildPlayer(){
  add('Sphere','helmet',{diameter:1,segments:18},[0,1.58,.015],null,[.29,.31,.29],armor);
  add('Sphere','helmet-crown',{diameter:.34,segments:14},[0,1.78,-.015],null,[1,.42,.85],trim);
  visor=add('Sphere','visor',{diameter:1,segments:16},[0,1.61,.235],null,[.235,.105,.075],cyan);
+ rigPlayer();
  add('Sphere','helmet-side-left',{diameter:.13,segments:10},[-.285,1.58,.02],null,[1,1,1],trim);
  add('Sphere','helmet-side-right',{diameter:.13,segments:10},[.285,1.58,.02],null,[1,1,1],trim);
 }
+// Joint pivots so the exosuit walks: hips and knees swing the legs, shoulders swing the arms.
+const RIG={};
+function rigPlayer(){const kids=player.getChildMeshes(true),piv=(name,parent,pos)=>{const t=new B.TransformNode(name,scene);t.parent=parent;t.position.set(pos[0],pos[1],pos[2]);return t};
+ const into=(m,node,origin)=>{m.parent=node;m.position.x-=origin[0];m.position.y-=origin[1];m.position.z-=origin[2]};
+ for(const s of[-1,1]){const sd=s<0?'L':'R',hipP=[s*.19,.79,0],kneeP=[s*.19,.51,.035],shP=[s*.5,1.3,0];
+  const hip=piv('hip'+sd,player,hipP),knee=piv('knee'+sd,hip,[0,kneeP[1]-hipP[1],kneeP[2]-hipP[2]]),sh=piv('sh'+sd,player,shP);RIG['hip'+sd]=hip;RIG['knee'+sd]=knee;RIG['sh'+sd]=sh;
+  for(const m of kids){const x=m.position.x;if(Math.sign(x)!==s)continue;
+   if(['boot','shin','knee'].includes(m.name))into(m,knee,kneeP);
+   else if(['thigh','hip-guard'].includes(m.name))into(m,hip,hipP);
+   else if(['upper-arm','elbow-joint','forearm','glove','gun-housing','gun-muzzle','drill-mount','drill-body','drill-bit','drill-energy-ring'].includes(m.name))into(m,sh,shP)}}}
+function animatePlayer(dt){if(!RIG.hipL)return;const sp=Math.hypot(P.vx,P.vy),fwd=P.vx*Math.cos(P.ang)+P.vy*Math.sin(P.ang);
+ P.wk=(P.wk||0)+(fwd<-.2?-1:1)*sp*dt*3.4;P.wa=(P.wa||0)+((sp>.3?Math.min(1,sp/4.3):0)-(P.wa||0))*Math.min(1,dt*10);const a=P.wa,w=P.wk;
+ RIG.hipL.rotation.x=-Math.sin(w)*.6*a;RIG.hipR.rotation.x=Math.sin(w)*.6*a;
+ RIG.kneeL.rotation.x=Math.max(0,Math.cos(w))*.9*a;RIG.kneeR.rotation.x=Math.max(0,-Math.cos(w))*.9*a;
+ RIG.shL.rotation.x=Math.sin(w)*.3*a;RIG.shR.rotation.x=-Math.sin(w)*.3*a;
+ return Math.abs(Math.sin(w))*.05*a}
 function buildHive(){const s=B.MeshBuilder.CreateSphere('hv',{diameter:1.6,segments:16},scene);const pos=s.getVerticesData(B.VertexBuffer.PositionKind);for(let i=0;i<pos.length;i+=3){const x=pos[i],y=pos[i+1],z=pos[i+2],n=1+.22*Math.sin(x*7+y*5)*Math.cos(z*6-y*3);pos[i]*=n;pos[i+1]*=n*.8;pos[i+2]*=n}s.updateVerticesData(B.VertexBuffer.PositionKind,pos);s.position.y=.45;
  const parts=[colored(s,[.3,.05,.22])];for(let k=0;k<7;k++){const a=k/7*Math.PI*2;parts.push(part('Cylinder',{height:1,diameterTop:0,diameterBottom:.22,tessellation:6},[.5,.15,.35],[Math.cos(a)*.75,.55,Math.sin(a)*.75],[Math.sin(a)*.7,0,-Math.cos(a)*.7]))}
  parts.push(part('Sphere',{diameter:.5,segments:8},[1,.3,.7],[0,1.05,0]));
@@ -495,10 +512,10 @@ function hurtPlayer(d){if(P.inv>0)return;P.hp-=d;P.hurtT=0;P.inv=.25;G.shake=Mat
 function newSquad(h,raid){return{h,members:[],state:raid?'hunt':'muster',side:rnd()<.5?-1:1,raid:!!raid,size:3+h.tier}}
 function spawnEnemy(type,h,sq,x,y){if(enemies.length>=70)return null;const d=ET[type],th=threat(x,y)*(1+(h?h.tier-1:0)*.25),lv=Math.floor(th*2);
  const e={type,x,y,r:d.r,hp:d.hp*th,max:d.hp*th,spd:d.spd*(1+Math.min(.5,(th-1)*.06)),dmg:d.dmg*(1+(th-1)*.45),lv,hive:h,sq,cd:rnd(),digT:0,flash:0,vx:0,vy:0,ph:rnd()*6,ret:false,retDone:false,role:rnd()<.45?'flank':'main',sumT:5,dead:false};
- const parts=acquireEnemyMeshes(type);e.b=parts.b;e.e=parts.e;e.bar=parts.bar;e.b.isVisible=e.e.isVisible=e.bar.isVisible=true;
+ const parts=acquireEnemyMeshes(type);e.b=parts.b;e.e=parts.e;e.bar=parts.bar;e.legs=parts.legs||[];e.wk=rnd()*6;e.b.isVisible=e.e.isVisible=e.bar.isVisible=true;
  if(type!=='queen'&&rnd()<.035+(G.pl||0)*.01){e.elite=true;e.hp*=3;e.max*=3;e.dmg*=1.4}
  if(sq)sq.members.push(e);if(h)h.count++;enemies.push(e);return e}
-function disposeEnemy(e){if(!e||!e.b)return;e.b.setEnabled(false);e.e.setEnabled(false);e.bar.setEnabled(false);let p=enemyPools[e.type];if(!p)enemyPools[e.type]=p=[];if(p.length<70)p.push({b:e.b,e:e.e,bar:e.bar});else{e.b.dispose();e.e.dispose();e.bar.dispose()}e.b=e.e=e.bar=null}
+function disposeEnemy(e){if(!e||!e.b)return;e.b.setEnabled(false);e.e.setEnabled(false);e.bar.setEnabled(false);let p=enemyPools[e.type];if(!p)enemyPools[e.type]=p=[];if(p.length<70)p.push({b:e.b,e:e.e,bar:e.bar,legs:e.legs});else{e.b.dispose();e.e.dispose();e.bar.dispose()}e.b=e.e=e.bar=e.legs=null}
 function squadComp(h,i){const t=h.tier,d=h.d;const pool=['stalker','stalker','spitter'];if(t>=2||d>45)pool.push('brute');if(d>40)pool.push('flyer','flyer');if(t>=2)pool.push('spitter');if(i===0&&t>=4&&rnd()<.35)return'queen';if(i===0&&t>=2&&rnd()<.4)return'brute';return pool[(rnd()*pool.length)|0]}
 function hiveSpawnPoint(h){for(let k=0;k<8;k++){const a=rnd()*6.28,r=rnd()*(h.r-.6);const x=h.x+.5+Math.cos(a)*r,y=h.y+.5+Math.sin(a)*r;if(isOpen(Math.floor(x),Math.floor(y)))return[x,y]}return[h.x+.5,h.y+.5]}
 function launchRaid(h){const n=Math.min(10,2+h.tier+Math.floor(G.t/240));const sq=newSquad(h,true);for(let i=0;i<n;i++){const p=hiveSpawnPoint(h);spawnEnemy(squadComp(h,i),h,sq,p[0],p[1])}
@@ -546,7 +563,12 @@ function updateEnemies(dt){
   const vis=revealed.has(K(Math.floor(e.x),Math.floor(e.y)))&&e.x>win.x0-1&&e.x<win.x1+1&&e.y>win.y0-1&&e.y<win.y1+1;
   e.b.isVisible=e.e.isVisible=vis;const fly=ET[e.type].fly,y=fly?1.7+Math.sin(G.t*6+e.ph)*.12:0,ry=Math.atan2(e.vx||P.x-e.x,e.vy||P.y-e.y);
   for(const m of[e.b,e.e]){m.position.set(e.x,y,e.y);m.rotation.y=ry}
-  const s=(e.type==='queen'?1.35:e.elite?1.3:1)*(e.flash>0?1.18:1),bob=1+Math.sin(G.t*12+e.ph)*.05;e.b.scaling.set(s*(fly?1+Math.sin(G.t*40)*.15:1),s*bob,s);e.e.scaling.set(s,s*bob,s);
+  const s=(e.type==='queen'?1.35:e.elite?1.3:1)*(e.flash>0?1.18:1),bob=1+Math.sin(G.t*12+e.ph)*.05;e.b.scaling.set(s,s*bob,s);e.e.scaling.set(s,s*bob,s);
+  {const sp=Math.hypot(e.vx,e.vy),amp=Math.min(1,sp/(e.spd*.6+.01));e.wk+=sp*dt*(e.type==='brute'?4.5:e.type==='queen'?5:9);
+   for(const l of e.legs){const L=l.L;l.isVisible=vis;if(!vis)continue;
+    if(L.kind==='scuttle'){const w=Math.sin(e.wk+L.ph);l.rotation.y=w*.38*amp;l.position.y=Math.max(0,w)*.08*amp}
+    else if(L.kind==='swing'){l.rotation.x=Math.sin(e.wk+L.ph)*.65*amp}
+    else if(L.kind==='wing'){l.rotation.z=L.side*Math.sin(G.t*45+e.ph)*.75}}}
   const showBar=vis&&e.hp<e.max;e.bar.isVisible=showBar;if(showBar){e.bar.position.set(e.x,y+1.2*s,e.y+.1);e.bar.scaling.x=Math.max(.02,e.hp/e.max)*(e.type==='queen'?1.6:.8)}}}
 function updateHives(dt){for(const h of activeHives){const vis=revealed.has(K(h.x,h.y));
   if(!h.mesh){h.mesh=(h.alive?hiveProto:huskProto).createInstance('hi');h.mesh.position.set(h.x+.5,0,h.y+.5);h.mesh.alive=h.alive}
@@ -586,7 +608,7 @@ function update(dt){G.t+=dt;
  if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').style.opacity=0}
  for(const d of dnPool)if(d.on){d.t+=dt;if(d.t>.9){d.on=false;d.el.style.display='none'}}
  // player visuals
- player.position.set(P.x,0,P.y);player.scaling.setAll(1.35);player.rotation.y=Math.PI/2-P.ang;
+ player.position.set(P.x,animatePlayer(dt)||0,P.y);player.scaling.setAll(1.35);player.rotation.y=Math.PI/2-P.ang;
  pLight.position.set(P.x,2.4,P.y);spot.position.set(P.x,1.4,P.y);spot.direction.set(Math.cos(P.ang),-.32,Math.sin(P.ang));
  if(M.beamT>0){const ox=P.x+Math.cos(P.ang)*.45,oy=P.y+Math.sin(P.ang)*.45,dx=M.bx-ox,dy=M.by-oy,L=Math.hypot(dx,dy);beamM.setEnabled(true);beamM.position.set(ox+dx/2,.62,oy+dy/2);beamM.scaling.set(1+Math.sin(G.t*60)*.4,1,L);beamM.rotation.y=Math.atan2(dx,dy)}else beamM.setEnabled(false)}
 function updateBullets(dt){
