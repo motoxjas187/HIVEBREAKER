@@ -541,7 +541,7 @@ function startRun(){resetState();placeCamera();reveal();buildFlow();rebuild();sh
 function goFull(){try{const el=document.documentElement;const p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen&&el.webkitRequestFullscreen();if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}}
 function applyGfx(){const mode=G.gfx,scale=mode==='quality'?Math.min(1.5,window.devicePixelRatio||1):mode==='balanced'?1.15:1;
  $('bGfx').textContent=mode==='quality'?'HIGH':mode==='balanced'?'BAL':'PERF';
- if(glow)glow.isEnabled=mode==='quality';if(shadowGen)dirLight.shadowEnabled=mode==='quality';
+ if(glow){glow.isEnabled=mode!=='performance';glow.blurKernelSize=mode==='quality'?32:16}if(shadowGen)dirLight.shadowEnabled=mode==='quality';
  engine.setHardwareScalingLevel(1/scale)}
 function setupUI(){$('bStart').onclick=()=>{goFull();startRun()};$('bAgain').onclick=()=>startRun();$('bShop').onclick=openShop;$('bShopX').onclick=()=>{show('ovShop',false);G.state='play';hud()};
  $('bAuto').onclick=()=>{G.auto=!G.auto;$('bAuto').classList.toggle('on',G.auto)};$('bZoom').onclick=()=>{G.zoom=G.zoom>=1.4?.75:+(G.zoom+.325).toFixed(3);G.blockDirty=true;if(G.state!=='play')rebuild()};
