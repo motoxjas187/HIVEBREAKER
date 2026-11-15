@@ -123,7 +123,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
 const LIBS=['https://cdn.jsdelivr.net/npm/babylonjs@9.36.0/babylon.js','https://unpkg.com/babylonjs@9.36.0/babylon.js','https://cdnjs.cloudflare.com/ajax/libs/babylonjs/8.0.0/babylon.js'];
 function loadLib(i){const s=document.createElement('script');s.src=LIBS[i];s.onload=()=>{const l=document.createElement('script');l.src='https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.36.0/babylon.glTF2FileLoader.min.js';l.onload=l.onerror=()=>boot();document.head.appendChild(l)};s.onerror=()=>{if(i+1<LIBS.length)loadLib(i+1);else $('load').textContent='Could not load the 3D engine. Check your connection.'};document.head.appendChild(s)}
 const $=id=>document.getElementById(id);
-let B,engine,scene,camera,glow,shadowGen,dirLight,spot,pLight,hemi;
+let lampPivot,lampCone,B,engine,scene,camera,glow,shadowGen,dirLight,spot,pLight,hemi;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,rnd=Math.random;
 const N4=[[1,0],[-1,0],[0,1],[0,-1]];
 let SEED=1;
@@ -234,7 +234,7 @@ function blockHP(x,y){const m=mods.get(K(x,y));return m?Math.ceil(m.h):maxHP(x,y
 
 /* ---------------- STATE ---------------- */
 const G={state:'title',t:0,vision:7,auto:true,gfx:'balanced',zoom:(()=>{try{return +localStorage.getItem('hb_zoom')||1.8}catch(e){return 1.8}})(),blockDirty:true,flowT:0,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,pl:0,rebuildCD:0,hudT:0,mmT:0,hiveT:0,shake:0};
-const M={dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cap:40,cd:0,beamT:0,bx:0,by:0};
+const M={dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cap:40,lamp:0,cd:0,beamT:0,bx:0,by:0};
 let W,P,enemies,bullets,acids,orbs,knownHives,activeHives,drones,loots,meteors;
 const enemyPools={};
 function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=p=[];const m=p.pop();if(m){m.b.setEnabled(true);m.e.setEnabled(true);m.bar.setEnabled(true);return m}const b=protos[type].b.createInstance('e');
@@ -242,7 +242,7 @@ function acquireEnemyMeshes(type){let p=enemyPools[type];if(!p)enemyPools[type]=
  return{b,e:protos[type].e.createInstance('ee'),bar:barProto.createInstance('eb'),legs}}
 function resetState(){SEED=(rnd()*1e9)|0;matCache.clear();hiveCache=new Map();dug=new Set();mods=new Map();revealed=new Set();
  Object.assign(G,{t:0,vision:7,blockDirty:true,flowDirty:true,lastCell:null,kills:0,hives:0,mined:0,maxDist:0,ore:0,lvl:1,xp:0,pend:0,shake:0,loot:0});
- Object.assign(M,{dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cap:40,cd:0,beamT:0});
+ Object.assign(M,{dmg:1,rate:4,reach:1.6,yield:1,magnet:2.2,cap:40,lamp:0,cd:0,beamT:0});
  G.cargo={};G.store={};G.base=freshBase();G.where='mine';G.recall=0;G.mineX=0;G.mineY=0;
  W=freshArmory();
  P={x:0,y:0,r:.32,hp:100,max:100,ang:Math.PI/2,vx:0,vy:0,hurtT:9,fireCD:0,inv:0};
@@ -260,10 +260,11 @@ const MU=[
  {id:'mag',ic:'⊛',n:'Magnet',d:'Pull loot from farther',base:16,max:10,f:l=>M.magnet=2.2+l*.6},
  {id:'hull',ic:'⛨',n:'Hull Plating',d:'+20 max hull, full repair',base:25,max:99,f:l=>{P.max=100+l*20;P.hp=P.max}},
  {id:'scan',ic:'◉',n:'Scanner',d:'See farther through tunnels',base:40,max:6,f:l=>{G.vision=7+l;reveal()}},
- {id:'cargo',ic:'▤',n:'Cargo Pod',d:'+30 cargo capacity',base:18,max:30,f:l=>M.cap=40+30*l}];
+ {id:'cargo',ic:'▤',n:'Cargo Pod',d:'+30 cargo capacity',base:18,max:30,f:l=>M.cap=40+30*l},
+ {id:'lamp',ic:'☀',n:'Headlamp',d:'Brighter, longer and wider light cone',base:12,max:6,f:l=>M.lamp=l}];
 const costOf=u=>Math.round(u.base*2.5*Math.pow(1.75,u.lvl));
 // Upgrade tree: each upgrade needs its parent at a set level before it unlocks.
-const TREE={pow:null,spd:['pow',1],reach:['spd',2],yield:['pow',2],cargo:null,mag:['cargo',1],hull:null,scan:['hull',2]};
+const TREE={lamp:null,pow:null,spd:['pow',1],reach:['spd',2],yield:['pow',2],cargo:null,mag:['cargo',1],hull:null,scan:['hull',2]};
 const muBy=id=>MU.find(u=>u.id===id);
 function unlocked(u){const r=TREE[u.id];return !r||muBy(r[0]).lvl>=r[1]}
 const reqTxt=r=>`Requires ${muBy(r[0]).n} LV ${r[1]}`;
@@ -338,7 +339,13 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  dirLight.autoUpdateExtends=false;dirLight.autoCalcShadowZBounds=false;dirLight.orthoLeft=-26;dirLight.orthoRight=26;dirLight.orthoTop=26;dirLight.orthoBottom=-26;dirLight.shadowMinZ=1;dirLight.shadowMaxZ=70;
  pLight=new B.PointLight('pl',new B.Vector3(0,2.2,0),scene);pLight.diffuse=new B.Color3(1,.82,.6);pLight.intensity=.9;pLight.range=10;
  spot=new B.SpotLight('sp',new B.Vector3(0,1.6,0),new B.Vector3(0,-.25,1),1.1,6,scene);spot.diffuse=new B.Color3(.75,.95,1);spot.intensity=2.2;spot.range=13;
- try{glow=new B.GlowLayer('glow',scene,{mainTextureRatio:.5,blurKernelSize:32});glow.intensity=.75}catch(e){glow=null}
+ // visible light cone (stealth-game style): additive, fades with distance, follows the mech's aim
+ {lampPivot=new B.TransformNode('lampPivot',scene);const c=B.MeshBuilder.CreateCylinder('lampCone',{height:1,diameterTop:0,diameterBottom:1,tessellation:24,cap:B.Mesh.NO_CAP},scene);
+  c.position.y=-.5;c.bakeCurrentTransformIntoVertices();c.rotation.x=-Math.PI/2;c.bakeCurrentTransformIntoVertices();
+  const gt=new B.DynamicTexture('lampGrad',{width:4,height:128},scene,false),gg=gt.getContext(),gr=gg.createLinearGradient(0,0,0,128);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.45,'rgba(255,255,255,.4)');gr.addColorStop(1,'rgba(255,255,255,0)');gg.fillStyle=gr;gg.fillRect(0,0,4,128);gt.hasAlpha=true;gt.update();
+  const cm=new B.StandardMaterial('lampMat',scene);cm.disableLighting=true;cm.emissiveColor=new B.Color3(.8,.95,1);cm.opacityTexture=gt;cm.alpha=.16;cm.alphaMode=B.Engine.ALPHA_ADD;cm.backFaceCulling=false;cm.disableDepthWrite=true;
+  c.material=cm;c.isPickable=false;c.parent=lampPivot;lampCone=c}
+ try{glow=new B.GlowLayer('glow',scene,{mainTextureRatio:.5,blurKernelSize:32});glow.intensity=.75;if(lampCone)glow.addExcludedMesh(lampCone)}catch(e){glow=null}
  try{shadowGen=new B.ShadowGenerator(1024,dirLight);shadowGen.usePercentageCloserFiltering=true;shadowGen.bias=.004;shadowGen.normalBias=.02;shadowGen.darkness=.35}catch(e){shadowGen=null}
  // textures & materials
  const rockT=noiseTex('rock',128,170,70,14),fogT=noiseTex('fogt',64,60,60,0),flrT=dyn('flr',128,(g,S)=>{g.fillStyle='#2b3136';g.fillRect(0,0,S,S);for(let i=0;i<500;i++){const v=30+rnd()*40|0;g.fillStyle=`rgb(${v},${v+4},${v+8})`;g.fillRect(rnd()*S,rnd()*S,2+rnd()*4,2+rnd()*4)}g.strokeStyle='#14181b';g.lineWidth=4;g.strokeRect(0,0,S,S);g.strokeStyle='#3c454b';g.lineWidth=1;g.strokeRect(5,5,S-10,S-10)});
@@ -731,6 +738,8 @@ function update(dt){const atBase=G.where==='base';if(!atBase)G.t+=dt;smeltTick(d
  // player visuals
  player.position.set(P.x,animatePlayer(dt)||0,P.y);player.scaling.setAll(1.35);player.rotation.y=Math.PI/2-P.ang;
  if(G.where==='base')pLight.position.set(BX+.5,7,BY+.5);else pLight.position.set(P.x,2.4,P.y);spot.position.set(P.x,1.4,P.y);spot.direction.set(Math.cos(P.ang),-.32,Math.sin(P.ang));
+ {const L=M.lamp||0;spot.intensity=2.2*(1+.35*L);spot.range=13+2.5*L;spot.angle=1.1+.08*L;
+  if(lampCone){const len=6+.9*L,w=2*Math.tan(.32+.025*L)*len;lampPivot.position.set(P.x+Math.cos(P.ang)*.35,1.45,P.y+Math.sin(P.ang)*.35);lampPivot.rotation.set(.3,Math.PI/2-P.ang,0);lampCone.scaling.set(w,w,len);lampCone.material.alpha=.13+.025*L;lampCone.setEnabled(G.where!=='base')}}
  if(M.beamT>0){const ox=P.x+Math.cos(P.ang)*.45,oy=P.y+Math.sin(P.ang)*.45,dx=M.bx-ox,dy=M.by-oy,L=Math.hypot(dx,dy);beamM.setEnabled(true);beamM.position.set(ox+dx/2,.62,oy+dy/2);beamM.scaling.set(1+Math.sin(G.t*60)*.4,1,L);beamM.rotation.y=Math.atan2(dx,dy)}else beamM.setEnabled(false)}
 function updateBullets(dt){
  for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.life-=dt;let dead=b.life<=0;
@@ -874,7 +883,7 @@ function confirmPlace(){const t=G.placing,p=placeTarget();if(!t||!p||!placeValid
 const bUpCost=b=>tierCost(b.lv-1,4+2*b.lv,100*Math.pow(2,b.lv-1));
 const ocCost=l=>{const c={scrap:400*Math.pow(2,l),bfe:6+4*l};if(l>=2)c.bau=4+2*l;return c};
 const beaconCost=l=>{const c={scrap:300*Math.pow(2,l),bcu:10+5*l};if(l>=1)c.bfe=8+4*l;return c};
-function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';$('bBuild').style.display=w==='base'?'':'none';if(w!=='base')endPlace();
+function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const ab=w==='base';if(spot)spot.setEnabled(!ab);if(lampCone)lampCone.setEnabled(!ab);if(hemi)hemi.intensity=ab?1.15:.38;if(pLight){pLight.range=ab?22:10;pLight.intensity=ab?2.2:.9}$('bShop').style.display=w==='base'?'none':'';$('bBuild').style.display=w==='base'?'':'none';if(w!=='base')endPlace();
  if(w==='base'){const D=baseDims();for(let x=BX-D.hw-1;x<=BX+D.hw+1;x++)for(let y=BY-D.hh-1;y<=BY+D.hh+1;y++)revealed.add(K(x,y))}}
 function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=G.recallMax=3/(1+.6*((G.base&&G.base.beacon)||0));$('recallBar').style.display='block'}
 function goBase(){G.recall=0;$('recallBar').style.display='none';G.mineX=P.x;G.mineY=P.y;for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
