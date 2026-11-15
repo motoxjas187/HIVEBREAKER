@@ -17,36 +17,45 @@ Goal: finding an ore is only the beginning. Each new material needs new technolo
 | Spending | Forge rig upgrades, building marks, base upgrades and expansion cost scrap plus bars by tier |
 | Visual assets | 11 Abyssal GLB blocks (iron, copper, coal, rare, silicon, uranium, steel, plate, circuit, cell, rod) |
 
-**Conflict to resolve:** the new rule "higher-tier machines improve throughput, not unlock materials" replaces the MK ore gate added on request earlier. The goal behind that gate (rare ore can't make you overpowered early) is kept. Rare ores are now locked behind specialized machines and power instead of marks.
+**Resolved:** the MK ore gate stays, and specialized machines and power are added on top. Marks also improve throughput.
 
 ---
 
-## 2. Reconciled resource list (aligned to the 11 Abyssal assets)
+## 2. Reconciled resource list (all Hivebreaker ores kept + Abyssal ores added)
+
+**Decided:** keep every existing Hivebreaker ore and add the missing Abyssal ones. Coal and Uranium are new mineable ores. Power travels by adjacency only. Marks keep the ore gate **and** specialized machines are required too.
 
 ### Raw (mined)
-| Resource | Source | Change | Model |
+| Resource | Source | Status | Model |
 |---|---|---|---|
-| Copper Ore | Near start | Unchanged | copper |
-| Iron Ore | 16m+ | Unchanged | iron |
-| **Coal** | Stone and basalt layers, common | **New ore.** Fuel and steel input | coal |
-| **Silicon** | 32m+ (today's Diamond Ore spots) | **Diamond Ore renamed** | silicon |
-| Gold (Relic) | Rare anywhere 12m+ | Keeps the free rig upgrade. Also a circuit input | cell (yellow) |
-| **Uranium** | 120m+ | **New deep ore**, radioactive | uranium |
-| **Rare Ore** | 60m+ (today's Core Ore spots) | **Core Ore renamed** | rare |
+| Copper Ore | Near start | Existing | copper ✓ |
+| Iron Ore | 16m+ | Existing | iron ✓ |
+| **Coal** | Stone and basalt layers, common | **New** · fuel and steel input | coal ✓ |
+| **Silicon** | 40m+ | **New** · wafers for circuits | silicon ✓ |
+| Diamond Ore | 32m+ | Existing · Cut Diamond (tier 4) | **diamond ✗ needs model** |
+| Gold Relic | Rare, 12m+ | Existing · free rig upgrade + Gold Bar | **gold ✗ needs model** |
+| Core Ore | 60m+ | Existing · Core Ingot (tier 5) | **core ✗ needs model** |
+| **Rare Ore** | 90m+ | **New** · Energy Cells | rare ✓ |
+| **Uranium** | 120m+ | **New** · fuel rods | uranium ✓ |
 
-Obsidian keeps a plain material (it currently borrows the coal model).
+Until the three missing models exist, Diamond, Gold and Core keep their current stand-in visuals (silicon, cell, rare). Obsidian keeps a plain material.
 
 ### Intermediates
 Crushed ores, Washed concentrates, Silicon Wafer, Enriched Uranium.
 
-### Products (Abyssal manufactured set)
-| Product | Recipe (machine) | Replaces |
+### Products
+| Product | Recipe (machine) | Model |
 |---|---|---|
-| **Plate** (Copper Plate / Iron Plate) | Ore → Furnace | Copper Bar, Iron Bar |
-| **Steel** | Iron Plate + Coal → Steel Mill | (new tier 2 material) |
-| **Circuit** | Copper Plate + Silicon Wafer + Gold → Assembler | Gold Bar / Cut Diamond tier |
-| **Rod** (Fuel Rod) | Enriched Uranium + Steel → Rod Fabricator | (new) |
-| **Cell** (Energy Cell) | Refined Rare + Circuit + Rod power → Plasma Refinery | Core Ingot |
+| Copper Plate | Copper → Furnace | plate ✓ |
+| Iron Plate | Iron → Furnace | **iron_plate ✗** |
+| Steel | Iron Plate + Coal → Steel Mill | steel ✓ |
+| Gold Bar | Gold → Crusher → Washer → Furnace | **gold_bar ✗** |
+| Silicon Wafer | Silicon → Crusher → Washer → Electric Smelter | **silicon_wafer ✗** |
+| Circuit | Copper Plate + Silicon Wafer + Gold Bar → Assembler | circuit ✓ |
+| Cut Diamond | Diamond → Crusher → Washer → Gem Cutter (power) | **cut_diamond ✗** |
+| Fuel Rod | Enriched Uranium + Steel → Rod Fabricator | rod ✓ |
+| Core Ingot | Core → Crusher → Washer → Arc Furnace (reactor power) | **core_ingot ✗** |
+| Energy Cell | Refined Rare + Circuit → Plasma Refinery | cell ✓ |
 
 ### Byproducts
 | Byproduct | From | Useful for / disposal |
@@ -93,7 +102,7 @@ Clogged byproducts stall the chain (output buffer full), so players have to plan
 | Incinerator | low | slag/ash → nothing | chimney with flame |
 | Battery Bank | – | stores power | stacked cells, charge bars |
 
-**Marks (MK1–MK5) improve throughput only:** speed, bigger buffers, better power efficiency. They never unlock a material.
+**Marks (MK1–MK5):** improve throughput (speed, buffers, power efficiency) **and** keep the existing ore gate: a machine's mark limits which ore tier it accepts (MK1 copper/coal, MK2 iron/silicon, MK3 gold/diamond, MK4 core/rare, MK5 uranium). Rare ores therefore need both the right machine chain and upgraded marks.
 
 ---
 
@@ -115,10 +124,10 @@ Each step unlocks a building in the Forge's tech tree (extends the existing upgr
 | Tier | Old material | New material |
 |---|---|---|
 | 1 | Copper Bar | Copper Plate |
-| 2 | Iron Bar | Iron Plate / Steel |
-| 3 | Gold Bar | Circuit |
-| 4 | Cut Diamond | Fuel Rod |
-| 5 | Core Ingot | Energy Cell |
+| 2 | Iron Bar | Iron Plate, then Steel |
+| 3 | Gold Bar | Gold Bar + Circuit |
+| 4 | Cut Diamond | Cut Diamond + Fuel Rod |
+| 5 | Core Ingot | Core Ingot + Energy Cell |
 
 Rig upgrades, building marks, base upgrades and expansion keep the same tree and prices, with the tier materials swapped.
 
@@ -126,8 +135,8 @@ Rig upgrades, building marks, base upgrades and expansion keep the same tree and
 
 ## 7. Save compatibility (migration on load)
 
-- Diamond Ore → Silicon, Core Ore → Rare Ore (same counts).
-- Copper Bar → Copper Plate, Iron Bar → Iron Plate, Gold Bar → Gold (refined) + matching Circuit credit, Cut Diamond → Silicon Wafer, Core Ingot → Energy Cell.
+- All ores keep their ids and counts.
+- Copper Bar → Copper Plate, Iron Bar → Iron Plate; Gold Bar, Cut Diamond and Core Ingot stay as they are.
 - Existing Smelter buildings become Furnaces at the same mark; Crushers and Storage Boxes stay.
 - No progress is lost.
 
@@ -143,8 +152,8 @@ Rig upgrades, building marks, base upgrades and expansion keep the same tree and
 
 Each phase ships playable, with its own commit and play link.
 
-## Open decisions
-- Rename Diamond → Silicon and Core → Rare to match the 11 assets (recommended), or keep Hivebreaker names and only swap visuals?
-- Add Coal and Uranium as new mineable ores (recommended)?
-- Power by adjacency only (recommended), or add power poles?
-- Confirm MK marks become throughput-only, replacing the MK ore gate.
+## Decisions (2026-11-15)
+- Keep all Hivebreaker ores; add Coal, Silicon, Rare and Uranium as mineable ores.
+- Power by adjacency only.
+- Marks keep the ore gate and also raise throughput; specialized machines are required on top.
+- Missing models are generated by extending `tools/generate_abyssal_ore_blocks.py` (see `docs/ASSET_REQUEST.md`).
