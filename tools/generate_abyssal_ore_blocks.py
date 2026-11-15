@@ -102,7 +102,7 @@ def build(name, color, kind):
       "scrap":[[(-.24,.18),(-.06,.12),(.12,.18),(.24,0),(-.12,-.12),(.12,-.18)]],
       "chitin":[[(-.24,.18),(-.12,.06),(0,.18),(.12,.06),(.24,-.18),(.06,-.12),(-.12,-.18)]],
     }
-    faces=[("z",.514),("z",-.514),("x",.514),("x",-.514),("y",.514),("y",-.514)]
+    faces=[("z",1),("z",-1),("x",1),("x",-1),("y",1),("y",-1)]  # unit sign; centers use sign*.514
     pattern=patterns[kind]
     dull = kind in ("slag","ash","sludge","depleted","waste")
     roughness = .9 if dull else (.16 if kind in ("gem_raw","cut_gem","obsidian") else (.42 if kind not in ("raw","gold_raw","core_raw") else .78))

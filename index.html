@@ -144,27 +144,33 @@ const MAT=[null,
  {n:'Hive Chitin',m:3.5,ore:8,c:[.3,.2,.28],g:5,mm:'#7a4a72'},
  {n:'Hive Resin',m:7,ore:18,c:[.55,.36,.1],g:6,mm:'#c88a2a'},
  {n:'Hive Flesh',m:12,ore:30,c:[.45,.12,.14],g:7,mm:'#c02838'},
- {n:'Hive Carapace',m:20,ore:50,c:[.08,.1,.14],g:8,mm:'#2aa088'}];
+ {n:'Hive Carapace',m:20,ore:50,c:[.08,.1,.14],g:8,mm:'#2aa088'},
+ {n:'Coal',m:2.5,ore:4,c:[.2,.22,.25],g:10,mm:'#3a3f48'},
+ {n:'Silicon',m:9,ore:30,c:[.25,.4,.6],g:11,mm:'#468fe7'},
+ {n:'Rare Ore',m:22,ore:90,c:[.4,.2,.55],g:12,mm:'#9d43dc'},
+ {n:'Uranium',m:26,ore:110,c:[.25,.5,.2],g:13,mm:'#5bda31'}];
+const NEW_ORE_TEX=[[[.2,.21,.24],[.42,.45,.5]],[[.27,.56,.9],[.7,.85,1]],[[.62,.26,.86],[.9,.7,1]],[[.36,.85,.19],[.8,1,.6]]];
 // hive shell textures by tier: [base, vein]
 const SHELL_TEX=[[[.30,.20,.28],[.68,.36,.62]],[[.52,.33,.09],[1,.72,.2]],[[.42,.10,.12],[1,.28,.32]],[[.07,.09,.13],[.3,.95,.75]]];
 const BX=30000,BY=30000;   // base level lives far from the mine
-const RES={scrap:{n:'Scrap',c:'#aab4bc',w:.1},cu:{n:'Copper Ore',c:'#c8692e',w:1},fe:{n:'Iron Ore',c:'#d8b48c',w:1},di:{n:'Rough Diamond',c:'#3ad8d0',w:1},au:{n:'Gold Ore',c:'#ffd23a',w:1},co:{n:'Core Ore',c:'#ff3a2a',w:1}};
-const BARS={bcu:{n:'Copper Bar',from:'cu',need:2,time:2,c:'#e07a3a'},bfe:{n:'Iron Bar',from:'fe',need:2,time:3,c:'#e8dccb'},bau:{n:'Gold Bar',from:'au',need:2,time:4,c:'#ffd23a'},bdi:{n:'Cut Diamond',from:'di',need:1,time:5,c:'#6ff6f0'},bco:{n:'Core Ingot',from:'co',need:2,time:7,c:'#ff5a3a'}};
+const RES={scrap:{n:'Scrap',c:'#aab4bc',w:.1},cu:{n:'Copper Ore',c:'#c8692e',w:1},fe:{n:'Iron Ore',c:'#d8b48c',w:1},di:{n:'Rough Diamond',c:'#3ad8d0',w:1},au:{n:'Gold Ore',c:'#ffd23a',w:1},co:{n:'Core Ore',c:'#ff3a2a',w:1},
+ cl:{n:'Coal',c:'#8a929e',w:1},si:{n:'Silicon',c:'#468fe7',w:1},ra:{n:'Rare Ore',c:'#b46cf0',w:1},ur:{n:'Uranium',c:'#5bda31',w:1}};
+const BARS={bcu:{n:'Copper Plate',from:'cu',need:2,time:2,c:'#e07a3a'},bfe:{n:'Iron Plate',from:'fe',need:2,time:3,c:'#e8dccb'},bau:{n:'Gold Bar',from:'au',need:2,time:4,c:'#ffd23a'},bdi:{n:'Cut Diamond',from:'di',need:1,time:5,c:'#6ff6f0'},bco:{n:'Core Ingot',from:'co',need:2,time:7,c:'#ff5a3a'}};
 const BAR_TIER=['bcu','bfe','bau','bdi','bco'];
 const RAW=['co','di','au','fe','cu'];   // highest value first
 const CRU={};for(const r of RAW)CRU['x'+r]={n:'Crushed '+RES[r].n.replace(' Ore','').replace('Rough ',''),c:RES[r].c,w:1};
 const ITEM=Object.assign({},RES,CRU,BARS);
 // Base buildings chain by adjacency: no belts. Storage boxes are ports into base storage.
 const BT={box:{n:'▣ STORAGE BOX',d:'Port into base storage. Neighbours pull ore and crushed ore from it and push finished products into it.',cost:{scrap:60,bcu:4}},
- crusher:{n:'⚙ CRUSHER',d:'Crushes 2 ore into 3 crushed ore. Put a smelter next to it for +50% bars. MK1 handles copper only; each mark adds the next ore.',cost:{scrap:150,bcu:6,bfe:4}},
- smelter:{n:'♨ SMELTER',d:'Smelts ore or crushed ore into bars. MK1 smelts copper only: upgrade it to unlock iron (MK2), gold (MK3), diamond (MK4) and core (MK5).',cost:{scrap:120,bcu:8}}};
+ crusher:{n:'⚙ CRUSHER',d:'Crushes 2 ore into 3 crushed ore. Put a furnace next to it for +50% output. Marks gate the ore the same way as the furnace.',cost:{scrap:150,bcu:6,bfe:4}},
+ smelter:{n:'♨ FURNACE',d:'Smelts ore or crushed ore into plates and bars (crushed is 20% faster). Marks gate the ore: MK1 copper, MK2 iron, MK3 gold and diamond, MK4 core. Coal, silicon, rare ore and uranium need machines that come later.',cost:{scrap:120,bcu:8}}};
 const EXPAND=[{pl:1,c:{scrap:8000,bfe:40,bau:20}},{pl:2,c:{scrap:32000,bau:60,bdi:30}},{pl:3,c:{scrap:128000,bdi:80,bco:40}},{pl:4,c:{scrap:512000,bco:150,bdi:120}}];
 const hasC=c=>Object.keys(c).every(k=>(G.store[k]||0)>=c[k]);
 function payC(c){for(const k in c)G.store[k]-=c[k]}
 const costTxtC=c=>Object.keys(c).filter(k=>c[k]).map(k=>`<span style="color:${(G.store[k]||0)>=c[k]?'#6fcf6a':'#d8503a'}">${fmtN(c[k])} ${k==='scrap'?'scrap':BARS[k].n}</span>`).join(' · ');
 function freshBase(){const b={};b[(BX-4)+','+(BY+3)]={t:'smelter',lv:1,inv:{},out:{},job:null};b[(BX-3)+','+(BY+3)]={t:'box',lv:1,inv:{},out:{},job:null};return{lvl:0,oc:0,beacon:0,b,acc:0}}
 function baseDims(){const l=(G.base&&G.base.lvl)||0;return{hw:7+3*l,hh:5+2*l}}
-const ORE_RES={4:'cu',5:'fe',6:'di',7:'au',9:'co'};
+const ORE_RES={4:'cu',5:'fe',6:'di',7:'au',9:'co',15:'cl',16:'si',17:'ra',18:'ur'};
 // Minecraft-style ore textures: [fleck colour, highlight]
 const ORE_TEX=[[[.86,.47,.22],[1,.72,.45]],[[.84,.68,.52],[.98,.86,.72]],[[.25,.92,.9],[.75,1,1]],[[1,.8,.12],[1,.97,.6]],[[.95,.15,.1],[1,.55,.35]]];
 const matCache=new Map();
@@ -172,11 +178,15 @@ function matAt(x,y){if(x>20000)return 10;const k=K(x,y);let t=matCache.get(k);if
  const d=Math.hypot(x+.5,y+.5),n=vn(x*.11,y*.11,1)*14;
  if(d<9+n*.5)t=vn(x*.3,y*.3,9)>.72&&d>5?2:1;else if(d<45+n)t=vn(x*.2,y*.2,8)>.7?1:2;else if(d<110+n*2)t=vn(x*.2,y*.2,8)>.72?2:3;else t=vn(x*.15,y*.15,8)>.55?8:3;
  const r=h2(x,y,3);
+ if(d>8&&vn(x*.28,y*.28,11)>.74&&r<.8)t=15;
  if(d>4&&vn(x*.33,y*.33,2)>.76&&r<.7)t=4;
  if(d>16&&vn(x*.3,y*.3,4)>.8&&r<.7)t=5;
  if(d>32&&vn(x*.38,y*.38,5)>.83)t=6;
  if(d>12&&h2(x,y,6)<.0018)t=7;
  if(d>60&&vn(x*.45,y*.45,7)>.86)t=9;
+ if(d>40&&vn(x*.36,y*.36,12)>.83)t=16;
+ if(d>90&&vn(x*.42,y*.42,13)>.87)t=17;
+ if(d>120&&vn(x*.4,y*.4,14)>.88)t=18;
  // hive shell: a ring of tier-specific blocks surrounds every hive cavity
  {const cx=Math.floor(x/CH),cy=Math.floor(y/CH);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const hv=hiveAt(cx+i,cy+j);if(!hv)continue;const dd=Math.hypot(x-hv.x,y-hv.y),rr=hv.r+.6,sh=hv.r+2.2+h2(x,y,31)*.9;if(dd>rr&&dd<=sh)t=10+Math.min(4,1+Math.floor(hv.d/55))}}
  matCache.set(k,t);return t}
@@ -263,7 +273,7 @@ function threat(x,y){return(1+Math.hypot(x,y)/28)*(1+G.t/500)*(1+.4*(G.pl||0))}
 
 /* ---------------- BOOT / SCENE ---------------- */
 let blockM,fogM,floorM,oreM=[],beamM,protos={},BPools=[],LPools={},APool,OPool,barProto,hiveProto,huskProto,PS=[],psI=0,player,visor,mats={};
-const MAXI=6000;const buf={ore:[0,1,2,3,4,5,6,7,8,9].map(()=>new Float32Array(3000*16)),oreC:[0,1,2,3,4,5,6,7,8,9].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
+const MAXI=6000;const buf={ore:[...Array(14).keys()].map(()=>new Float32Array(3000*16)),oreC:[...Array(14).keys()].map(()=>new Float32Array(3000*4)),blk:new Float32Array(MAXI*16),blkC:new Float32Array(MAXI*4),fog:new Float32Array(MAXI*16),fogC:new Float32Array(MAXI*4),flr:new Float32Array(MAXI*16),flrC:new Float32Array(MAXI*4),};
 class Pool{constructor(src){this.src=src;this.free=[];this.n=0}get(){let m=this.free.pop();if(!m)m=this.src.createInstance('i'+(this.n++));m.setEnabled(true);return m}put(m){m.setEnabled(false);this.free.push(m)}}
 function dyn(name,size,draw){const t=new B.DynamicTexture(name,{width:size,height:size},scene,true);const ctx=t.getContext();draw(ctx,size);t.update();return t}
 function noiseTex(name,size,base,var1,edge){return dyn(name,size,(g,S)=>{const im=g.createImageData(S,S);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const i=(y*S+x)*4;let v=base+(rnd()-.5)*var1+(vn(x*.06,y*.06,77)-.5)*var1*1.6;if(edge){const e=Math.min(x,y,S-1-x,S-1-y);if(e<edge)v*=.55+.45*e/edge;if(e<2)v*=1.35}v=clamp(v,0,255);im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}g.putImageData(im,0,0)})}
@@ -314,6 +324,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  oreM=ORE_TEX.map((c,i)=>{const t=oreTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+i,{size:1},scene),mt=stdMat('orem'+i,[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;return m});
  SHELL_TEX.forEach((c,i)=>{const t=shellTextures(i,c[0],c[1]),m=B.MeshBuilder.CreateBox('shell'+i,{size:1},scene),mt=stdMat('shellm'+i,[1,1,1],null,.6);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
  {const ob=B.MeshBuilder.CreateBox('obsid',{size:1},scene),om=stdMat('obsm',[.12,.1,.17],null,.5);om.diffuseTexture=rockT;ob.material=om;ob.receiveShadows=true;oreM.push(ob)}
+ NEW_ORE_TEX.forEach((c,i)=>{const t=oreTextures(10+i,c[0],c[1]),m=B.MeshBuilder.CreateBox('ore'+(10+i),{size:1},scene),mt=stdMat('orem'+(10+i),[1,1,1],null,.45);mt.diffuseTexture=t.d;mt.emissiveTexture=t.e;m.material=mt;m.receiveShadows=true;oreM.push(m)});
  for(const m of [blockM,fogM,floorM,...oreM]){m.alwaysSelectAsActiveMesh=true;m.doNotSyncBoundingInfo=true;m.isPickable=false}
  floorM.receiveShadows=true;blockM.receiveShadows=true;
  // beam
@@ -462,7 +473,7 @@ function setM(a,i,x,y,z,sx,sy,sz,ry){const o=i*16,c=Math.cos(ry||0),s=Math.sin(r
 function setC(a,i,r,g,b){a[i*4]=r;a[i*4+1]=g;a[i*4+2]=b;a[i*4+3]=1}
 function pushBuf(mesh,mat,col,n){if(n<=0){mesh.isVisible=false;return}mesh.isVisible=true;mesh.thinInstanceSetBuffer('matrix',mat.subarray(0,n*16),16,false);if(col)mesh.thinInstanceSetBuffer('color',col.subarray(0,n*4),4,false)}
 function rebuild(){G.blockDirty=false;const px=Math.floor(P.x),py=Math.floor(P.y),z=G.zoom,RX=Math.ceil(19*z),Y0=Math.ceil(11*z),Y1=Math.ceil(15*z);
- win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=[0,0,0,0,0,0,0,0,0,0];labelList=[];
+ win={x0:px-RX,x1:px+RX,y0:py-Y0,y1:py+Y1};let nb=0,nf=0,nl=0;const nc=new Array(14).fill(0);labelList=[];
  const hv=activeHives.filter(h=>h.alive);
  for(let y=win.y0;y<=win.y1;y++)for(let x=win.x0;x<=win.x1;x++){const k=K(x,y),rev=revealed.has(k),open=isOpen(x,y);
   if(nb>=MAXI||nf>=MAXI||nl>=MAXI)break;
@@ -786,7 +797,7 @@ function updateBaseVis(dt){updateItemsVis(dt);for(const m of bInst){if(m.tag==='
  if(G.placing){const t=placeTarget(),ok=t&&placeValid(t[0],t[1]);GHOST.setEnabled(!!t);if(t){GHOST.position.set(t[0]+.5,.05,t[1]+.5);GHOST.material.emissiveColor.set(ok?.2:1,ok?1:.2,ok?.4:.2)}$('bPlaceOk').disabled=!ok||!hasC(BT[G.placing].cost)}}
 /* ---- Abyssal ore block models (assets/ores/glb): visuals only, no resource or mining logic ---- */
 // world blocks: draw group index -> model; base products: item -> model
-const ORE_GLB={world:{0:'copper',1:'iron',2:'silicon',3:'cell',4:'rare',9:'coal'},items:{bcu:'plate',bfe:'steel',bau:'rod',bdi:'circuit',bco:'uranium'}};
+const ORE_GLB={world:{0:'copper',1:'iron',2:'diamond',3:'gold',4:'core',5:'hive_chitin',9:'obsidian',10:'coal',11:'silicon',12:'rare',13:'uranium'},items:{bcu:'plate',bfe:'iron_plate',bau:'gold_bar',bdi:'cut_diamond',bco:'core_ingot'}};
 const GLBM={},flying=[],boxShow=new Map();
 async function loadOreModels(){if(!B.SceneLoader||!B.SceneLoader.ImportMeshAsync||window.__NULL)return;
  const names=[...new Set([...Object.values(ORE_GLB.world),...Object.values(ORE_GLB.items)])];
@@ -825,20 +836,34 @@ function bAt(x,y){return G.base.b[x+','+y]}
 function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
 const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
 // Mark gates which ores a building can handle: MK1 copper, MK2 iron, MK3 gold, MK4 diamond, MK5 core.
-const ORE_TIER=['cu','fe','au','di','co'];
-const canDo=(b,r)=>ORE_TIER.indexOf(r)<b.lv;
-function wants(b){const raw=RAW.filter(r=>canDo(b,r));return b.t==='crusher'?raw:[...raw.map(r=>'x'+r),...raw]}
-const tierTxt=b=>ORE_TIER.filter(r=>canDo(b,r)).map(r=>`<span style="color:${RES[r].c}">${RES[r].n.replace(' Ore','').replace('Rough ','')}</span>`).join(', ');
+// Mark gate (kept): which ore tier a machine accepts. Marks also raise throughput.
+const ORE_MK={cu:1,cl:1,fe:2,si:2,au:3,di:3,co:4,ra:4,ur:5};
+// Recipe table: every machine process is data. in/out are item->count; gate is the ore its mark must allow.
+const RECIPES=[];
+for(const r of RAW)RECIPES.push({m:'crusher',in:{[r]:2},out:{['x'+r]:3},t:1.5,gate:r});
+for(const r of RAW){const b0=BARS['b'+r];RECIPES.push({m:'smelter',in:{['x'+r]:b0.need},out:{['b'+r]:1},t:b0.time*.8,gate:r});RECIPES.push({m:'smelter',in:{[r]:b0.need},out:{['b'+r]:1},t:b0.time,gate:r})}
+const canRun=(b,rc)=>!rc.gate||ORE_MK[rc.gate]<=b.lv;
+const recipesFor=b=>RECIPES.filter(rc=>rc.m===b.t&&canRun(b,rc));
+function wants(b){const s=new Set();for(const rc of recipesFor(b))for(const k in rc.in)s.add(k);return[...s]}
+const oreNm=r=>`<span style="color:${RES[r].c}">${RES[r].n.replace(' Ore','').replace('Rough ','')}</span>`;
+const machOres=t=>[...new Set(RECIPES.filter(rc=>rc.m===t&&rc.gate).map(rc=>rc.gate))];
+const tierTxt=b=>machOres(b.t).filter(r=>ORE_MK[r]<=b.lv).map(oreNm).join(', ')||'nothing yet';
+const nextTxt=b=>machOres(b.t).filter(r=>ORE_MK[r]===b.lv+1).map(oreNm).join(', ');
 function flowFx(ax,ay,bx,by,it){if(G.where!=='base')return;const c=B.Color3.FromHexString(ITEM[it].c);burst((ax+bx)/2+.5,.9,(ay+by)/2+.5,5,[c.r,c.g,c.b],[c.r*.6,c.g*.6,c.b*.6],1.2)}
 function smeltTick(dt){const BS=G.base;if(!BS)return;BS.acc=(BS.acc||0)+dt;if(BS.acc<.2)return;const st=BS.acc;BS.acc=0;const S=G.store;
  for(const key in BS.b){const b=BS.b[key];if(b.t==='box')continue;const[x,y]=key.split(',').map(Number),nb=N4.map(n=>[x+n[0],y+n[1]]);
   const outN=Object.values(b.out).reduce((a,v)=>a+v,0);
-  if(!b.job&&outN<8){for(const it of wants(b)){const r=it[0]==='x'?it.slice(1):it,need=b.t==='crusher'?2:BARS['b'+r].need;let have=b.inv[it]||0;
-    for(const[nx,ny]of nb){if(have>=need)break;const n=bAt(nx,ny);
-     if(isPort(nx,ny)){const tk=Math.min(need-have,S[it]||0);if(tk>0){S[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
-     else if(n&&n.t!=='box'&&n.out[it]>0){const tk=Math.min(need-have,n.out[it]);n.out[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
-    b.inv[it]=have;if(have>=need){b.inv[it]-=need;b.job=b.t==='crusher'?{out:'x'+r,n:3,t:1.5,T:1.5}:{out:'b'+r,n:1,t:BARS['b'+r].time*(it[0]==='x'?.8:1),T:BARS['b'+r].time*(it[0]==='x'?.8:1)};break}}}
-  if(b.job){b.job.t-=st*bSpeed(b);if(b.job.t<=0){b.out[b.job.out]=(b.out[b.job.out]||0)+b.job.n;b.job=null}}
+  if(b.job&&typeof b.job.out==='string')b.job.out={[b.job.out]:b.job.n||1};   // pre-recipe saves
+  if(!b.job&&outN<8){for(const rc of recipesFor(b)){
+    let ok=true;for(const it in rc.in){let av=b.inv[it]||0;for(const[nx,ny]of nb){const n=bAt(nx,ny);if(isPort(nx,ny))av+=S[it]||0;else if(n&&n.t!=='box')av+=n.out[it]||0}if(av<rc.in[it]){ok=false;break}}
+    if(!ok)continue;
+    for(const it in rc.in){const need=rc.in[it];let have=b.inv[it]||0;
+     for(const[nx,ny]of nb){if(have>=need)break;const n=bAt(nx,ny);
+      if(isPort(nx,ny)){const tk=Math.min(need-have,S[it]||0);if(tk>0){S[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
+      else if(n&&n.t!=='box'&&n.out[it]>0){const tk=Math.min(need-have,n.out[it]);n.out[it]-=tk;have+=tk;flowFx(nx,ny,x,y,it)}}
+     b.inv[it]=have-need}
+    b.job={out:Object.assign({},rc.out),t:rc.t,T:rc.t};break}}
+  if(b.job){b.job.t-=st*bSpeed(b);if(b.job.t<=0){for(const k in b.job.out)b.out[k]=(b.out[k]||0)+b.job.out[k];b.job=null}}
   // push products: keep ones a neighbouring building will pull, send the rest to a port
   for(const it in b.out){if(!(b.out[it]>0))continue;const used=nb.some(([nx,ny])=>{const n=bAt(nx,ny);return n&&n.t!=='box'&&wants(n).includes(it)});
    if(used&&b.out[it]<6)continue;const p=nb.find(([nx,ny])=>isPort(nx,ny));if(p){S[it]=(S[it]||0)+b.out[it];flowFx(x,y,p[0],p[1],it);if(ORE_GLB.items[it]){flyItem(x,y,p[0],p[1],it);const pb=bAt(p[0],p[1]);if(pb)pb.last=it}b.out[it]=0}}}
@@ -853,12 +878,12 @@ function renderBase(){const body=$('bpBody'),S=G.store;const bk0=openMach.starts
  $('bpH').textContent=openMach==='build'?'▦ BUILD':BB?BT[BB.t].n+' MK'+BB.lv:MACH.find(m=>m.id===openMach).n;const sc=body.scrollTop;body.innerHTML='';
  const btn=(t,fn,col,dis)=>{const b=document.createElement('button');b.className='pb';b.textContent=t;if(col)b.style.borderColor=col;b.disabled=!!dis;b.onclick=()=>{fn();renderBase();hud()};return b};
  const rk=Object.keys(RES),bk=BAR_TIER;
- if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Smelter → Storage Box. Products flow on their own, even while you are in the mine.</p>');
+ if(openMach==='build'){body.insertAdjacentHTML('beforeend','<p>Buildings link to the tiles touching them, with no belts. Chain them: Vault or Storage Box → Crusher → Furnace → Storage Box. Products flow on their own, even while you are in the mine.</p>');
   for(const t in BT){const lk=BREQ[t]?BREQ[t]():null,row=document.createElement('div');row.className='row';if(lk)row.style.opacity=.55;row.innerHTML=`<div><b>${BT[t].n}</b><small>${BT[t].d}</small><small>${lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(BT[t].cost)}</small></div>`;row.appendChild(btn(lk?'LOCKED':'BUILD',()=>{if(!lk)startPlace(t)},'#e3a53a',!!lk||!hasC(BT[t].cost)));body.appendChild(row)}}
  if(BB){const[x,y]=bk0.split(',').map(Number),links=N4.map(n=>[x+n[0],y+n[1]]).map(([a,b])=>a===MACH[0].x&&b===MACH[0].y?'Vault':bAt(a,b)?BT[bAt(a,b).t].n.replace(/^\S+\s/,''):null).filter(Boolean);
-  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'?`<p>Can process: ${tierTxt(BB)}${BB.lv<5?` · MK${BB.lv+1} adds <span style="color:${RES[ORE_TIER[BB.lv]].c}">${RES[ORE_TIER[BB.lv]].n}</span>`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
-  if(BB.t!=='box'){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+ITEM[j.out].n:'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
-  const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed${BB.t!=='box'&&BB.lv<5?' · unlocks '+RES[ORE_TIER[BB.lv]].n:''}</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
+  body.insertAdjacentHTML('beforeend',`<p>${BT[BB.t].d}</p>${BB.t!=='box'?`<p>Can process: ${tierTxt(BB)}${BB.lv<5&&nextTxt(BB)?` · MK${BB.lv+1} adds ${nextTxt(BB)}`:''}</p>`:''}<p>Linked to: <b style="color:var(--am)">${links.length?links.join(', '):'nothing (place it next to another building)'}</b> · Speed ×${bSpeed(BB).toFixed(2)}</p>`);
+  if(BB.t!=='box'){const j=BB.job;body.insertAdjacentHTML('beforeend',`<div class="sm-row"><span style="min-width:120px">${j?'Making '+(typeof j.out==='string'?ITEM[j.out].n:Object.keys(j.out).map(k=>ITEM[k].n).join(' + ')):'Idle · waiting for input'}</span><div class="pg"><i style="width:${j?(1-j.t/j.T)*100:0}%"></i></div></div>`+'<p style="margin:4px 0 0">Input</p>'+resRows(BB.inv,Object.keys(ITEM),ITEM)+'<p style="margin:4px 0 0">Output</p>'+resRows(BB.out,Object.keys(ITEM),ITEM))}
+  const uc=bUpCost(BB),mx=BB.lv>=5,lk=mx?null:BREQ.mk(BB),row=document.createElement('div');row.className='row';row.innerHTML=`<div><b>UPGRADE TO MK${BB.lv+1}</b><small>+50% speed${BB.t!=='box'&&BB.lv<5&&nextTxt(BB)?' · unlocks '+nextTxt(BB):''}</small><small>${mx?'MAX':lk?'<span style="color:#d8503a">🔒 '+lk+'</span>':costTxtC(uc)}</small></div>`;
   row.appendChild(btn(mx?'MAX':lk?'LOCKED':'UPGRADE',()=>{if(mx||lk||!hasC(uc))return;payC(uc);BB.lv++;syncBuildings();openMach='bld:'+bk0},'#e3a53a',mx||!!lk||!hasC(uc)));body.appendChild(row);
   body.appendChild(btn('DEMOLISH · 50% REFUND',()=>{for(const k in BT[BB.t].cost)S[k]=(S[k]||0)+Math.floor(BT[BB.t].cost[k]/2);for(const o of[BB.inv,BB.out])for(const k in o)S[k]=(S[k]||0)+o[k];delete G.base.b[bk0];syncBuildings();closeBase()},'#d8503a'))}
  if(openMach==='store'){const cw=Math.floor(cargoW());
