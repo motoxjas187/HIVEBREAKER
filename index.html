@@ -99,7 +99,7 @@ p{font-size:16px;line-height:1.3;margin:6px 0;color:#aebbc2}
  <p><b style="color:var(--am)">Dig</b> by pushing into rock or aiming at it. Every block shows its health, and rock gets tougher the farther you go and the longer you survive. Ore fills your cargo hold: <b style="color:var(--cy)">recall to base</b> (⌂ BASE) to store it, smelt it into bars and forge rig upgrades. Gold <b style="color:#ffd23a">relic</b> blocks give one free.</p>
  <p><b style="color:var(--rd)">Hives</b> are buried in the rock. Kills drop <b style="color:var(--am)">guns and attachments</b> that get better the deeper you go. Every hive is wrapped in a shell of glowing, pulsing blocks that tells you its strength: purple chitin, amber resin, red flesh, then black carapace. Listen for it festering behind the rock. Queens, brutes and hives drop <b style="color:#2ff5c8">Unique</b> guns. Fuse and merge them in the ⚔ ARMS screen. A hive you destroy grows back once it's out of sight, and it sends raids that tunnel after you.</p>
  <p style="font-size:14px;color:#6f8088">Touch: left side moves, right side aims · Keys: WASD, mouse aims, click fires</p>
- <div id="best" style="font-size:15px;color:#8fa0a8"></div>
+ <div id="best" style="font-size:15px;color:#8fa0a8"></div><div id="cloudT" style="font-size:13px;color:#4fd0d8;margin-top:2px"></div>
  <button class="go" id="bCont" style="display:none">CONTINUE</button><br><button class="go" id="bStart">START RUN</button>
 </div></div>
 <div class="ov" id="ovArm"><div class="armw">
@@ -380,7 +380,7 @@ function boot(){B=window.BABYLON;$('load').style.display='none';
  scene.onBeforeRenderObservable.add(()=>{const dt=Math.min(.05,engine.getDeltaTime()/1000||.016);audioTick(dt);{const pu=1.25+Math.sin(performance.now()/420)*.45;for(const t of SHELL_EM)t.level=pu}if(G.state==='play')update(dt);else if(G.state==='base'||G.state==='armory'||G.state==='pause'){smeltTick(dt);}updateCamera(dt);updateLabels()});
  engine.runRenderLoop(()=>scene.render());
  addEventListener('resize',()=>engine.resize());
- resetState();G.state='title';showBest();placeCamera();rebuild();
+ resetState();G.state='title';showBest();cloudInit();placeCamera();rebuild();
 }
 
 function buildProtos(){
@@ -556,8 +556,8 @@ function setupInput(){const tz=$('touch'),kM=$('kMove'),kA=$('kAim');
  addEventListener('keydown',e=>{IN.keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&G.state==='play'){if(G.placing)confirmPlace();else if(nearM)openMachine(nearM)}if(e.key.toLowerCase()==='r'&&G.state==='play')startRecall();if(e.key===' ')IN.keys.space=true;if(e.key==='Escape'&&G.state==='play')pause()});
  addEventListener('keyup',e=>{IN.keys[e.key.toLowerCase()]=false;if(e.key===' ')IN.keys.space=false});
  addEventListener('wheel',e=>{G.zoom=clamp(G.zoom+(e.deltaY>0?.1:-.1),1,2.6);G.blockDirty=true;try{localStorage.setItem('hb_zoom',G.zoom)}catch(_){}},{passive:true});
- addEventListener('pagehide',()=>saveGame());
- document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause();saveGame()}else if(engine&&!window.__NULL){engine.resize()}})}
+ addEventListener('pagehide',()=>{saveGame();cloudPush(true)});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play')pause();saveGame();cloudPush(true)}else if(engine&&!window.__NULL){engine.resize()}})}
 function mouseGround(){const r=scene.createPickingRay(IN.mouse.x*(engine.getRenderWidth()/innerWidth),IN.mouse.y*(engine.getRenderHeight()/innerHeight),B.Matrix.Identity(),camera);if(Math.abs(r.direction.y)<1e-4)return null;const t=-(r.origin.y-.5)/r.direction.y;return[r.origin.x+r.direction.x*t,r.origin.z+r.direction.z*t]}
 
 /* ---------------- FX ---------------- */
@@ -773,11 +773,32 @@ const SAVE_KEY='hivebreaker_save';
 function stripI(it){const o=HBW.strip(it);delete o._cd;return o}
 function armorySave(){return{eq:W.eq.map(g=>g?stripI(g):null),inv:W.inv.map(stripI),nw:W.nw}}
 function armoryLoad(w){if(!w.eq[0]&&!w.eq[1])w.eq[0]=freshArmory().eq[0];return w}
+/* ---- cloud save: per-player private storage on the artifact, so a save follows your Claude account across devices ---- */
+const CLOUD={col:null,busy:false,last:0,again:false,state:'off'};
+async function gzB64(str){if(!window.CompressionStream)return 'raw:'+str;const buf=await new Response(new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(),u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return 'gz:'+btoa(s)}
+async function unB64(z){if(z.startsWith('raw:'))return z.slice(4);const bin=atob(z.slice(3)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text()}
+async function cloudInit(){try{if(!window.claude||!window.claude.use)return;CLOUD.state='checking';showBest();
+  const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);if(!db||!user){CLOUD.state='off';showBest();return}
+  const id=await user.id();if(!id){CLOUD.state='off';showBest();return}CLOUD.col=db.collection('data/users/'+id);await cloudPull();CLOUD.state='on';showBest()}catch(e){console.warn('cloud init',e);CLOUD.state='off';showBest()}}
+async function cloudPull(){const m=await CLOUD.col.doc('save_meta').get();if(!m.exists)return;const meta=m.data();
+ let local=null;try{local=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
+ if(meta.best){try{const lb=JSON.parse(localStorage.getItem('hivebreaker_best')||'{}'),cb=JSON.parse(meta.best);for(const k in cb)lb[k]=Math.max(lb[k]||0,cb[k]);localStorage.setItem('hivebreaker_best',JSON.stringify(lb))}catch(e){}}
+ if(!meta.parts){if(meta.cleared&&local&&(local.ts||0)<meta.ts)localStorage.removeItem(SAVE_KEY);return}
+ if(local&&(local.ts||0)>=meta.ts)return;   // this device has the newer save
+ let z='';for(let i=0;i<meta.parts;i++){const p=await CLOUD.col.doc('save_'+i).get();if(!p.exists)return;z+=p.data().d}
+ const raw=await unB64(z);JSON.parse(raw);if(G.state==='title')localStorage.setItem(SAVE_KEY,raw)}
+async function cloudPush(force){if(!CLOUD.col)return;if(CLOUD.busy){CLOUD.again=CLOUD.again||force;return}if(!force&&Date.now()-CLOUD.last<20000)return;
+ const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;CLOUD.busy=true;CLOUD.last=Date.now();
+ try{const z=await gzB64(raw),N=200000,parts=Math.ceil(z.length/N),ts=JSON.parse(raw).ts||Date.now();
+  for(let i=0;i<parts;i++)await CLOUD.col.doc('save_'+i).set({d:z.slice(i*N,(i+1)*N)});
+  await CLOUD.col.doc('save_meta').set({ts,parts,best:localStorage.getItem('hivebreaker_best')||'',at:new Date().toISOString()})}catch(e){console.warn('cloud save',e)}
+ CLOUD.busy=false;if(CLOUD.again){CLOUD.again=false;cloudPush(true)}}
+async function cloudClear(){if(!CLOUD.col)return;try{await CLOUD.col.doc('save_meta').set({ts:Date.now(),parts:0,cleared:true,best:localStorage.getItem('hivebreaker_best')||''})}catch(e){}}
 function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
-function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}cloudClear()}
 function saveGame(){if(!P||G.state==='title'||G.state==='dead')return;try{const hv=[];for(const h of hiveCache.values())if(h&&(h.known||!h.alive||h.regrows||h.hp<h.max))hv.push([h.cx,h.cy,h.alive?1:0,h.tier,Math.round(h.hp),h.known?1:0,+h.deadAt.toFixed(1),+h.lastNear.toFixed(1),h.regrows,+h.waveCD.toFixed(1),h.max]);
- const s={v:1,seed:SEED,g:{t:G.t,vision:G.vision,kills:G.kills,hives:G.hives,mined:G.mined,maxDist:G.maxDist,loot:G.loot||0,pl:G.pl,auto:G.auto,cargo:G.cargo,store:G.store,base:G.base,where:G.where,mineX:G.mineX,mineY:G.mineY},p:{x:P.x,y:P.y,hp:P.hp,max:P.max,ang:P.ang},w:armorySave(),mu:MU.map(u=>u.lvl),dug:[...dug],mods:[...mods].map(([k,m])=>[k,+m.h.toFixed(2),m.m,m.t]),rev:[...revealed],hv};
- localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){console.warn('save failed',e)}}
+ const s={v:1,ts:Date.now(),seed:SEED,g:{t:G.t,vision:G.vision,kills:G.kills,hives:G.hives,mined:G.mined,maxDist:G.maxDist,loot:G.loot||0,pl:G.pl,auto:G.auto,cargo:G.cargo,store:G.store,base:G.base,where:G.where,mineX:G.mineX,mineY:G.mineY},p:{x:P.x,y:P.y,hp:P.hp,max:P.max,ang:P.ang},w:armorySave(),mu:MU.map(u=>u.lvl),dug:[...dug],mods:[...mods].map(([k,m])=>[k,+m.h.toFixed(2),m.m,m.t]),rev:[...revealed],hv};
+ localStorage.setItem(SAVE_KEY,JSON.stringify(s));cloudPush(false)}catch(e){console.warn('save failed',e)}}
 function loadGame(){let s=null;try{s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}if(!s||s.v!==1)return false;
  resetState();SEED=s.seed;matCache.clear();hiveCache=new Map();Object.assign(G,s.g);if(!G.store){G.store={scrap:s.g.ore||0};G.cargo={}}delete G.ore;if(G.smelt){for(const k in G.smelt.q||{})G.store[BARS[k].from]=(G.store[BARS[k].from]||0)+G.smelt.q[k]*BARS[k].need;delete G.smelt}if(!G.base||!G.base.b)G.base=freshBase();W=s.w&&s.w.eq?armoryLoad(s.w):freshArmory();
  dug=new Set(s.dug);for(const m of s.mods)mods.set(m[0],{h:m[1],m:m[2],t:m[3]});revealed=new Set(s.rev);
@@ -892,8 +913,8 @@ function setWhere(w){G.where=w;if(baseRoot)baseRoot.setEnabled(w==='base');const
  if(w==='base'){const D=baseDims();for(let x=BX-D.hw-1;x<=BX+D.hw+1;x++)for(let y=BY-D.hh-1;y<=BY+D.hh+1;y++)revealed.add(K(x,y))}}
 function startRecall(){if(G.where!=='mine'||G.state!=='play')return;if(G.recall>0){G.recall=0;$('recallBar').style.display='none';toast('RECALL CANCELLED');return}G.recall=G.recallMax=3/(1+.6*((G.base&&G.base.beacon)||0));$('recallBar').style.display='block'}
 function goBase(){G.recall=0;$('recallBar').style.display='none';G.mineX=P.x;G.mineY=P.y;for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
- setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;P.hp=P.max;placeCamera();G.lastCell=null;G.blockDirty=true;burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('BASE · CARGO '+Math.floor(cargoW())+'/'+M.cap);saveGame()}
-function deploy(){show('ovBase',false);openMach=null;nearM=null;$('actBtn').style.display='none';G.state='play';setWhere('mine');P.x=0;P.y=0;P.vx=P.vy=0;G.wasSafe=true;placeCamera();G.lastCell=null;G.blockDirty=true;G.flowDirty=true;reveal();burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('DEPLOYED');saveGame()}
+ setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;P.hp=P.max;placeCamera();G.lastCell=null;G.blockDirty=true;burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('BASE · CARGO '+Math.floor(cargoW())+'/'+M.cap);saveGame();cloudPush(true)}
+function deploy(){show('ovBase',false);openMach=null;nearM=null;$('actBtn').style.display='none';G.state='play';setWhere('mine');P.x=0;P.y=0;P.vx=P.vy=0;G.wasSafe=true;placeCamera();G.lastCell=null;G.blockDirty=true;G.flowDirty=true;reveal();burst(P.x,.5,P.y,40,[.4,.9,1],[.2,.5,1],4);toast('DEPLOYED');saveGame();cloudPush(true)}
 function bAt(x,y){return G.base.b[x+','+y]}
 function isPort(x,y){const b=bAt(x,y);return(b&&b.t==='box')||(x===MACH[0].x&&y===MACH[0].y)}
 const bSpeed=b=>(1+.5*(b.lv-1))*(1+.25*(G.base.oc||0));
@@ -1123,13 +1144,14 @@ function renderArmory(){$('armOre').textContent=fmtN(G.store.scrap||0)+' scrap';
   d.innerHTML=`<b style="color:${HBW.rarityColor(it)}">${itemTitle(it)}</b>${HBW.rarityName(it)} · ${itemLines(it)[0]}`;d.onclick=()=>toggleSel(it);inv.appendChild(d)}
  if(!list.length)inv.innerHTML='<div style="color:#58666e;padding:8px">Empty. Kill aliens and break hives to find guns and attachments.</div>'}
 function statsHTML(){return[['Prestige','P'+G.pl],['Time',fmtT(G.t)],['Farthest',Math.round(G.maxDist)+'m'],['Kills',G.kills],['Hives',G.hives],['Blocks',G.mined],['Loot',G.loot||0]].map(q=>`<span>${q[0]}</span><b>${q[1]}</b>`).join('')}
-function pause(){if(G.state!=='play')return;G.state='pause';saveGame();$('pauseStats').innerHTML=statsHTML();show('ovPause',true)}
+function pause(){if(G.state!=='play')return;G.state='pause';saveGame();cloudPush(true);$('pauseStats').innerHTML=statsHTML();show('ovPause',true)}
 function die(){if(G.state==='dead')return;G.state='dead';burst(P.x,.6,P.y,60,[.3,.9,1],[1,.5,.2],5);let best={};try{best=JSON.parse(localStorage.getItem('hivebreaker_best')||'{}')}catch(e){}
  const nb={dist:Math.max(best.dist||0,Math.round(G.maxDist)),kills:Math.max(best.kills||0,G.kills),hives:Math.max(best.hives||0,G.hives),pl:Math.max(best.pl||0,G.pl),time:Math.max(best.time||0,Math.floor(G.t))};try{localStorage.setItem('hivebreaker_best',JSON.stringify(nb))}catch(e){}
  G.recall=0;$('recallBar').style.display='none';const kept={};for(const k in G.cargo){const v=Math.floor(G.cargo[k]*SALVAGE);if(v)kept[k]=v}const lw=Math.floor(cargoW());$('deadStats').innerHTML=statsHTML()+`<span>Cargo lost</span><b style="color:#d8503a">${lw}</b><span>Salvaged</span><b style="color:#e3a53a">10%</b>`;
  setTimeout(()=>{G.cargo=kept;P.hp=P.max;P.inv=0;calmEnemies();for(const b of bullets)BPools[b.pool].put(b.mesh);bullets=[];
-  setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;placeCamera();G.lastCell=null;G.blockDirty=true;saveGame();G.state='dead';show('ovDead',true)},700)}
-function showBest(){const sv=hasSave(),bc=$('bCont');bc.style.display=sv?'':'none';$('bStart').textContent=sv?'NEW RUN':'START RUN';$('bStart').dataset.arm='';if(sv){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));bc.textContent='CONTINUE · P'+(s.g.pl||0)+' · '+fmtT(s.g.t)}catch(e){}}
+  setWhere('base');P.x=BX+.5;P.y=BY-1.5;P.vx=P.vy=0;placeCamera();G.lastCell=null;G.blockDirty=true;saveGame();cloudPush(true);G.state='dead';show('ovDead',true)},700)}
+function showBest(){{const cs=$('cloudT');if(cs)cs.textContent=CLOUD.state==='checking'?'☁ Checking your cloud save…':CLOUD.state==='on'?'☁ Cloud save on: your progress follows your Claude account':'Saves on this device only';}
+const sv=hasSave(),bc=$('bCont');bc.style.display=sv?'':'none';$('bStart').textContent=sv?'NEW RUN':'START RUN';$('bStart').dataset.arm='';if(sv){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));bc.textContent='CONTINUE · P'+(s.g.pl||0)+' · '+fmtT(s.g.t)}catch(e){}}
 let b=null;try{b=JSON.parse(localStorage.getItem('hivebreaker_best')||'null')}catch(e){}$('best').textContent=b?`BEST · P${b.pl||0} · ${b.dist}m · ${b.kills} kills · ${b.hives} hives · ${fmtT(b.time)}`:''}
 function startRun(){resetState();setWhere('mine');syncBuildings();G.pl=0;clearSave();placeCamera();reveal();buildFlow();rebuild();show('ovTitle',false);show('ovDead',false);show('ovPause',false);G.state='play';hud();toast('DIG OUT · FIND THE HIVES')}
 function goFull(){try{const el=document.documentElement;const p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen&&el.webkitRequestFullscreen();if(p&&p.then)p.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}}
