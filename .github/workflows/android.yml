@@ -1,0 +1,44 @@
+name: Build Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle the game for offline play
+        run: |
+          A=android/app/src/main/assets
+          mkdir -p $A/lib $A/weapons $A/assets/ores
+          cp index.html $A/index.html
+          cp weapons/weapons.js $A/weapons/
+          cp assets/ores/ore_models.js $A/assets/ores/
+          curl -fsSL https://cdn.jsdelivr.net/npm/babylonjs@9.36.0/babylon.js -o $A/lib/babylon.js
+          curl -fsSL https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.36.0/babylon.glTF2FileLoader.min.js -o $A/lib/babylon.glTF2FileLoader.min.js
+          sed -i 's#https://cdn.jsdelivr.net/npm/babylonjs@9.36.0/babylon.js#lib/babylon.js#; s#https://cdn.jsdelivr.net/npm/babylonjs-loaders@9.36.0/babylon.glTF2FileLoader.min.js#lib/babylon.glTF2FileLoader.min.js#' $A/index.html
+          grep -q "lib/babylon.js" $A/index.html
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.7' }
+      - name: Build APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon -PbuildNumber=${{ github.run_number }}
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk Hivebreaker.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hivebreaker-apk
+          path: Hivebreaker.apk
+      - name: Publish to the fixed download link
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Hivebreaker APK (latest build)
+          prerelease: true
+          make_latest: false
+          body: "Test build #${{ github.run_number }} from ${{ github.sha }}. Installs over earlier builds."
+          files: Hivebreaker.apk

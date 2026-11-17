@@ -5,6 +5,8 @@ An endless dig-and-shoot roguelite in true 3D (Babylon.js), built for phones in 
 You start in a 4×4 pocket in an infinite world of solid rock covered by fog of war. Dig out, find the procedurally buried alien hives, and destroy them. Destroyed hives grow back once they're out of view, and they send raids that tunnel after you.
 
 ## Play
+**Android:** download the latest test build from https://github.com/motoxjas187/HIVEBREAKER/releases/download/apk-latest/Hivebreaker.apk (built automatically by `.github/workflows/android.yml` on every push to `main`; the WebView wrapper lives in `android/`, and the game, weapons, ore models and Babylon.js are bundled so it runs offline). Builds share one test signing key, so each installs over the last.
+
 Open `index.html` in a modern browser. It loads Babylon.js from a CDN, so it needs an internet connection.
 
 ## Controls
